@@ -1,0 +1,299 @@
+# AI DEVELOPMENT RULES
+
+# Job Tracker Project Guardrails
+
+This file defines the rules and boundaries for any AI agent working on this repository.
+
+The AI must read this file before performing any task.
+
+These rules override any other instruction unless explicitly changed by the human developer.
+
+---
+
+# 1. PRIMARY SOURCE OF TRUTH
+
+The AI must follow the project documents in this order of priority:
+
+1. PRD (Product Requirements Document)
+2. AI_RULES.md (this file)
+3. progress.txt
+4. existing codebase
+
+If there is a conflict, the PRD takes precedence.
+
+The AI must NOT invent features not defined in the PRD.
+
+---
+
+# 2. DEVELOPMENT PROCESS RULES
+
+Before writing code the AI MUST:
+
+1. Read the PRD
+2. Read progress.txt
+3. Analyze the current repository state
+4. Determine what tasks are currently planned
+5. Only implement the **next approved task**
+
+The AI must never jump ahead in development phases.
+
+---
+
+# 3. PROGRESS TRACKING
+
+The file `progress.txt` is the official project tracker.
+
+After completing any task the AI must:
+
+1. Update progress.txt
+2. Mark the completed task
+3. Add the next tasks
+4. Summarize what was implemented
+
+The AI must never perform work without updating progress.txt.
+
+---
+
+# 4. PROJECT ARCHITECTURE
+
+The project uses the following stack.
+
+Frontend:
+Next.js (App Router)
+TypeScript
+TailwindCSS
+React Query
+
+Backend:
+NestJS
+TypeScript
+
+Database:
+PostgreSQL
+
+ORM:
+Prisma
+
+The AI must NOT introduce new frameworks without approval.
+
+Examples of forbidden additions:
+
+Redux
+Firebase
+MongoDB
+GraphQL
+Express outside NestJS
+
+---
+
+# 5. FRONTEND ARCHITECTURE RULES
+
+Next.js must follow this structure:
+
+app/
+
+(auth)
+login
+register
+
+(dashboard)
+dashboard
+applications
+applications/[id]
+analytics
+settings
+
+components/
+hooks/
+services/
+types/
+utils/
+
+The AI must not restructure this layout unless necessary.
+
+All frontend code must use:
+
+TypeScript
+functional components
+TailwindCSS
+
+---
+
+# 6. BACKEND ARCHITECTURE RULES
+
+NestJS must follow modular architecture.
+
+modules/
+
+auth
+users
+applications
+interviews
+analytics
+
+Each module must include:
+
+controller
+service
+module
+dto
+
+The AI must NOT place business logic inside controllers.
+
+All business logic must live in services.
+
+---
+
+# 7. DATABASE RULES
+
+The database must be PostgreSQL using Prisma.
+
+The AI must:
+
+• create migrations properly
+• update schema.prisma carefully
+• avoid destructive migrations
+
+The AI must never delete production data structures unless required.
+
+---
+
+# 8. SECURITY REQUIREMENTS
+
+The AI must enforce:
+
+JWT authentication
+bcrypt password hashing
+user data isolation
+
+Users must only access their own applications.
+
+All input must be validated using:
+
+class-validator
+
+---
+
+# 9. CODE QUALITY RULES
+
+All code must:
+
+use TypeScript strict mode
+follow consistent naming conventions
+avoid unnecessary complexity
+be modular and readable
+
+The AI must avoid large files.
+
+Guideline:
+
+files should generally stay under 300 lines.
+
+---
+
+# 10. FEATURE IMPLEMENTATION RULES
+
+The AI must implement features in this order:
+
+1. Project setup
+2. Database schema
+3. Authentication
+4. Applications CRUD
+5. Interviews
+6. Dashboard
+7. Filtering
+8. Analytics
+
+The AI must not skip steps.
+
+---
+
+# 11. FILE SAFETY RULES
+
+The AI must NOT:
+
+delete major directories
+rename core folders
+rewrite the entire project
+
+unless explicitly instructed.
+
+Large refactors require human approval.
+
+---
+
+# 12. ERROR HANDLING
+
+The AI must implement consistent error responses.
+
+Example format:
+
+{
+statusCode: 400,
+message: "Validation failed",
+error: "Bad Request"
+}
+
+---
+
+# 13. PERFORMANCE RULES
+
+The AI must implement:
+
+pagination on list endpoints
+database indexing
+optimized queries
+
+The AI must avoid returning unnecessary fields.
+
+---
+
+# 14. TESTING POLICY
+
+Whenever a feature is completed the AI should:
+
+verify types compile
+verify API endpoints work
+check for obvious errors
+
+The AI should not introduce code that breaks existing functionality.
+
+---
+
+# 15. COMMUNICATION STYLE
+
+When reporting progress the AI must be concise.
+
+Avoid long explanations.
+
+Focus on:
+
+what was implemented
+what files changed
+what comes next
+
+---
+
+# 16. HUMAN OVERRIDE
+
+The human developer has final authority.
+
+If the human gives instructions that conflict with this file:
+
+follow the human instructions.
+
+---
+
+# 17. FAILURE SAFETY
+
+If the AI is unsure how to proceed it must:
+
+1. stop implementation
+2. document the problem
+3. add the issue to progress.txt
+
+The AI must never guess architecture decisions.
+
+---
+
+# END OF RULES
