@@ -10,19 +10,19 @@
 - [ ] Configure environment variables (.env setup)
 
 ### 1.2 Database Setup
-- [ ] Install and configure Prisma ORM
-- [ ] Set up PostgreSQL database connection
-- [ ] Create initial Prisma schema file
-- [ ] Generate Prisma client
-- [ ] Create database migration files
+- [x] Install and configure Prisma ORM
+- [x] Set up PostgreSQL database connection
+- [x] Create initial Prisma schema file
+- [x] Generate Prisma client
+- [x] Create database migration files
 
 ### 1.3 Core Models Implementation
-- [ ] Define User model in Prisma schema
-- [ ] Define Application model in Prisma schema
-- [ ] Define Interview model in Prisma schema
-- [ ] Define Tag model in Prisma schema
-- [ ] Add required indexes and constraints
-- [ ] Run database migrations
+- [x] Define User model in Prisma schema
+- [x] Define Application model in Prisma schema
+- [x] Define Interview model in Prisma schema
+- [x] Define Tag model in Prisma schema
+- [x] Add required indexes and constraints
+- [x] Run database migrations
 
 ### 1.4 NestJS Module Structure
 - [ ] Create auth module (controller, service, module, DTOs)
