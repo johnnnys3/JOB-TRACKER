@@ -25,11 +25,11 @@
 - [x] Run database migrations
 
 ### 1.4 NestJS Module Structure
-- [ ] Create auth module (controller, service, module, DTOs)
-- [ ] Create users module (controller, service, module, DTOs)
-- [ ] Create applications module (controller, service, module, DTOs)
-- [ ] Create interviews module (controller, service, module, DTOs)
-- [ ] Create analytics module (controller, service, module, DTOs)
+- [x] Create auth module (controller, service, module, DTOs)
+- [x] Create users module (controller, service, module, DTOs)
+- [x] Create applications module (controller, service, module, DTOs)
+- [x] Create interviews module (controller, service, module, DTOs)
+- [x] Create analytics module (controller, service, module, DTOs)
 
 ## Phase 2 — Authentication System
 
