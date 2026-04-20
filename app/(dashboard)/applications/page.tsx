@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AddApplicationModal } from "@/components/AddApplicationModal";
-import { mockApplications } from "@/mockData";
-import { Application, ApplicationStatus } from "@/types";
+import { Application, ApplicationStatus, CreateApplicationDto } from "@/types";
+import { useApplications, useCreateApplication } from "@/hooks/useApplications";
 import {
   Select,
   SelectContent,
@@ -17,16 +17,20 @@ import {
 } from "@/components/ui/select";
 
 export default function Applications() {
-  const [applications, setApplications] = useState<Application[]>(mockApplications);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  const { data: applicationsData, isLoading, error } = useApplications();
+  const createApplicationMutation = useCreateApplication();
+  
+  const applications = applicationsData?.data || [];
 
   const filteredApplications = applications.filter((app) => {
     const matchesSearch =
       app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.location.toLowerCase().includes(searchQuery.toLowerCase());
+      (app.location && app.location.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -35,6 +39,37 @@ export default function Applications() {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-8">
+        <div className="animate-pulse">
+          <div className="h-12 bg-gray-200 rounded mb-8 w-48"></div>
+          <div className="flex gap-4 mb-6">
+            <div className="flex-1 h-10 bg-gray-200 rounded"></div>
+            <div className="w-48 h-10 bg-gray-200 rounded"></div>
+          </div>
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="bg-white rounded-lg p-6 mb-4 border border-gray-200">
+              <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">Failed to load applications. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -81,7 +116,12 @@ export default function Applications() {
 
       {/* Applications List */}
       <div className="bg-white rounded-lg shadow-sm border border-neutral-200">
-        {filteredApplications.map((app) => (
+        {filteredApplications.length === 0 ? (
+          <div className="p-12 text-center">
+            <p className="text-gray-500">No applications found matching your criteria.</p>
+          </div>
+        ) : (
+          filteredApplications.map((app) => (
           <div key={app.id} className="p-6 border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50 transition-colors">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -126,16 +166,16 @@ export default function Applications() {
               </div>
             </div>
           </div>
-        ))}
+        ))
+        )}
       </div>
 
       {/* Add Application Modal */}
       <AddApplicationModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onAddApplication={(newApp) => {
-          setApplications([newApp, ...applications]);
-          setIsAddModalOpen(false);
+        onSubmit={(data: CreateApplicationDto) => {
+          createApplicationMutation.mutate(data);
         }}
       />
     </div>

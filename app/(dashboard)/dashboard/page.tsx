@@ -1,22 +1,51 @@
 import { FileText, Calendar, CheckCircle, XCircle } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
-import { mockApplications } from "@/mockData";
+import { useApplications } from "@/hooks/useApplications";
 import { Application } from "@/types";
 
 export default function Dashboard() {
-  const totalApplications = mockApplications.length;
-  const interviews = mockApplications.filter(app => app.status === "interview").length;
-  const offers = mockApplications.filter(app => app.status === "offer").length;
-  const rejections = mockApplications.filter(app => app.status === "rejected").length;
+  const { data: applicationsData, isLoading, error } = useApplications({ limit: 100 });
+
+  if (isLoading) {
+    return (
+      <div className="p-8">
+        <div className="animate-pulse">
+          <div className="h-12 bg-gray-200 rounded mb-8 w-64"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-gray-200 rounded-lg h-32"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">Failed to load dashboard data. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const applications = applicationsData?.data || [];
+  
+  const totalApplications = applications.length;
+  const interviews = applications.filter(app => app.status === "interview").length;
+  const offers = applications.filter(app => app.status === "offer").length;
+  const rejections = applications.filter(app => app.status === "rejected").length;
 
   // Get recent applications (last 5)
-  const recentApplications = [...mockApplications]
-    .sort((a, b) => new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime())
+  const recentApplications = [...applications]
+    .sort((a: Application, b: Application) => new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime())
     .slice(0, 5);
 
   // Get upcoming interviews
-  const upcomingInterviews = mockApplications
+  const upcomingInterviews = applications
     .filter(app => app.interviews && app.interviews.length > 0)
     .flatMap(app => 
       app.interviews!.map(interview => ({
@@ -27,7 +56,7 @@ export default function Dashboard() {
       }))
     )
     .filter(interview => new Date(interview.date) >= new Date())
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3);
 
   const formatDate = (dateString: string) => {
