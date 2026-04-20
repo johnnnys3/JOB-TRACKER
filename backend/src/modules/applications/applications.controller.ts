@@ -54,6 +54,21 @@ export class ApplicationsController {
     return this.applicationsService.remove(id, req.user.id);
   }
 
+  // Interview endpoints as per PRD specification
+  @Post(':id/interviews')
+  addInterview(
+    @Param('id') id: string,
+    @Body() createInterviewDto: any,
+    @Request() req
+  ) {
+    return this.applicationsService.addInterview(id, createInterviewDto, req.user.id);
+  }
+
+  @Get(':id/interviews')
+  getInterviews(@Param('id') id: string, @Request() req) {
+    return this.applicationsService.getInterviews(id, req.user.id);
+  }
+
   @Post(':id/tags/:tagId')
   addTag(
     @Param('id') id: string,

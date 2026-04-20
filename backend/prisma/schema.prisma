@@ -32,23 +32,23 @@ model User {
 
 // Application model for job applications
 model Application {
-  id           String      @id @default(cuid())
-  company      String
-  position     String
-  status       ApplicationStatus @default(APPLIED)
-  location     String?
-  jobType      JobType?
-  salary       String?
-  description  String?
-  requirements String?
-  applicationDate DateTime @default(now())
-  lastUpdated  DateTime    @updatedAt
+  id              String            @id @default(cuid())
+  company         String
+  jobTitle        String
+  description     String?
+  location        String?
+  jobLink         String?
+  salaryRange     String?
+  applicationDate DateTime          @default(now())
+  status          ApplicationStatus @default(APPLIED)
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   
   // Relations
   userId      String
   user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
   interviews  Interview[]
-  tags        ApplicationTag[]
 
   @@index([userId])
   @@index([status])
@@ -58,16 +58,11 @@ model Application {
 
 // Interview model for tracking interview stages
 model Interview {
-  id          String       @id @default(cuid())
-  type        InterviewType
+  id          String   @id @default(cuid())
   stage       String
   date        DateTime
-  time        String?
-  location    String?
   notes       String?
-  status      InterviewStatus @default(SCHEDULED)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime @default(now())
 
   // Relations
   applicationId String
@@ -84,7 +79,6 @@ model Interview {
 model Tag {
   id          String @id @default(cuid())
   name        String @unique
-  color       String @default("#3B82F6")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -105,37 +99,14 @@ model ApplicationTag {
   @@id([applicationId, tagId])
 }
 
-// Enums for type safety
+
+// Enums for type safety - matching PRD specification
 enum ApplicationStatus {
+  WISHLIST
   APPLIED
-  PHONE_SCREEN
-  TECHNICAL_INTERVIEW
-  FINAL_INTERVIEW
+  INTERVIEW
   OFFER
   REJECTED
-  WITHDRAWN
+  ACCEPTED
 }
 
-enum JobType {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  INTERNSHIP
-  FREELANCE
-}
-
-enum InterviewType {
-  PHONE
-  VIDEO
-  ONSITE
-  TECHNICAL
-  BEHAVIORAL
-  FINAL
-}
-
-enum InterviewStatus {
-  SCHEDULED
-  COMPLETED
-  CANCELLED
-  RESCHEDULED
-}

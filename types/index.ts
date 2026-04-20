@@ -1,26 +1,25 @@
-export type ApplicationStatus = 'wishlist' | 'applied' | 'interview' | 'offer' | 'rejected' | 'accepted';
+export type ApplicationStatus = 'WISHLIST' | 'APPLIED' | 'INTERVIEW' | 'OFFER' | 'REJECTED' | 'ACCEPTED';
 
 export interface Interview {
   id: string;
-  type: string;
+  stage: string;
   date: string;
-  interviewer?: string;
   notes?: string;
+  createdAt: string;
 }
 
 export interface Application {
   id: string;
   company: string;
-  role: string;
+  jobTitle: string;
   description?: string;
   location?: string;
   jobLink?: string;
   salaryRange?: string;
-  appliedDate: string;
+  applicationDate: string;
   status: ApplicationStatus;
   notes?: string;
   interviews?: Interview[];
-  tags?: string[];
   createdAt: string;
   updatedAt: string;
 }

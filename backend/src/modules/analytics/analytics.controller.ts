@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, UseGuards, Request } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -10,23 +10,5 @@ export class AnalyticsController {
   @Get('summary')
   getSummary(@Request() req) {
     return this.analyticsService.getSummary(req.user.id);
-  }
-
-  @Get('trends/applications')
-  getApplicationTrends(
-    @Request() req,
-    @Query('days') days?: string,
-  ) {
-    const daysNum = days ? parseInt(days, 10) : 30;
-    return this.analyticsService.getApplicationTrends(req.user.id, daysNum);
-  }
-
-  @Get('trends/interviews')
-  getInterviewTrends(
-    @Request() req,
-    @Query('days') days?: string,
-  ) {
-    const daysNum = days ? parseInt(days, 10) : 30;
-    return this.analyticsService.getInterviewTrends(req.user.id, daysNum);
   }
 }

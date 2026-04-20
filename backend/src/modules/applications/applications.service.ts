@@ -141,10 +141,44 @@ export class ApplicationsService {
     });
   }
 
+  
+  
+  async addInterview(applicationId: string, createInterviewDto: any, userId: string) {
+    // Verify user owns the application
+    await this.findOne(applicationId, userId);
+
+    return this.prisma.interview.create({
+      data: {
+        ...createInterviewDto,
+        applicationId,
+        userId,
+      },
+      include: {
+        application: true,
+      },
+    });
+  }
+
+  async getInterviews(applicationId: string, userId: string) {
+    // Verify user owns application
+    await this.findOne(applicationId, userId);
+
+    return this.prisma.interview.findMany({
+      where: {
+        applicationId,
+      },
+      include: {
+        application: true,
+      },
+      orderBy: {
+        date: 'asc',
+      },
+    });
+  }
+
   async addTag(applicationId: string, tagId: string, userId: string) {
     const application = await this.findOne(applicationId, userId);
 
-    // Create the junction table entry directly
     return this.prisma.applicationTag.create({
       data: {
         applicationId,
