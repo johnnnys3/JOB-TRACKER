@@ -1,5 +1,5 @@
 import { api } from './api';
-import { Application, CreateApplicationDto, UpdateApplicationDto } from '@/types';
+import { ApiResponse, Application, CreateApplicationDto, UpdateApplicationDto } from '@/types';
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -15,6 +15,7 @@ export interface ApplicationsQuery {
   status?: string;
   company?: string;
   search?: string;
+  dateApplied?: string;
 }
 
 export const applicationsService = {
@@ -26,32 +27,40 @@ export const applicationsService = {
     if (params.status) searchParams.append('status', params.status);
     if (params.company) searchParams.append('company', params.company);
     if (params.search) searchParams.append('search', params.search);
+    if (params.dateApplied) searchParams.append('dateApplied', params.dateApplied);
 
     const endpoint = `/applications${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-    return api.get<PaginatedResponse<Application>>(endpoint);
+    const response = await api.get<ApiResponse<PaginatedResponse<Application>>>(endpoint);
+    return response.data;
   },
 
   async getById(id: string): Promise<Application> {
-    return api.get<Application>(`/applications/${id}`);
+    const response = await api.get<ApiResponse<Application>>(`/applications/${id}`);
+    return response.data;
   },
 
   async create(data: CreateApplicationDto): Promise<Application> {
-    return api.post<Application>('/applications', data);
+    const response = await api.post<ApiResponse<Application>>('/applications', data);
+    return response.data;
   },
 
   async update(id: string, data: UpdateApplicationDto): Promise<Application> {
-    return api.patch<Application>(`/applications/${id}`, data);
+    const response = await api.patch<ApiResponse<Application>>(`/applications/${id}`, data);
+    return response.data;
   },
 
   async delete(id: string): Promise<{ message: string }> {
-    return api.delete<{ message: string }>(`/applications/${id}`);
+    const response = await api.delete<ApiResponse<Application>>(`/applications/${id}`);
+    return { message: response.message };
   },
 
   async addTag(applicationId: string, tagId: string): Promise<Application> {
-    return api.post<Application>(`/applications/${applicationId}/tags/${tagId}`);
+    const response = await api.post<ApiResponse<Application>>(`/applications/${applicationId}/tags/${tagId}`);
+    return response.data;
   },
 
   async removeTag(applicationId: string, tagId: string): Promise<Application> {
-    return api.delete<Application>(`/applications/${applicationId}/tags/${tagId}`);
+    const response = await api.delete<ApiResponse<Application>>(`/applications/${applicationId}/tags/${tagId}`);
+    return response.data;
   },
 };

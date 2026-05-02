@@ -1,32 +1,17 @@
-import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { InterviewType, InterviewStatus } from '@prisma/client';
+import { IsString, IsOptional, IsDateString } from 'class-validator';
 
 export class CreateInterviewDto {
-  @IsEnum(InterviewType)
-  type: InterviewType;
-
   @IsString()
-  stage: string;
+  stage!: string;
 
   @IsDateString()
-  date: string;
-
-  @IsOptional()
-  @IsString()
-  time?: string;
-
-  @IsOptional()
-  @IsString()
-  location?: string;
+  date!: string;
 
   @IsOptional()
   @IsString()
   notes?: string;
 
   @IsOptional()
-  @IsEnum(InterviewStatus)
-  status?: InterviewStatus;
-
   @IsString()
-  applicationId: string;
+  applicationId?: string;
 }

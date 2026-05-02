@@ -4,9 +4,8 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ApplicationStatus, CreateApplicationDto, statusOptions } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CreateApplicationDto, ApplicationStatus } from '@/types';
-import { statusOptions } from '@/mockData';
 
 interface AddApplicationModalProps {
   isOpen: boolean;
@@ -23,6 +22,7 @@ export function AddApplicationModal({ isOpen, onClose, onSubmit }: AddApplicatio
     jobLink: '',
     salaryRange: '',
     applicationDate: new Date().toISOString().split('T')[0],
+    status: 'APPLIED',
     notes: ''
   });
 
@@ -37,6 +37,7 @@ export function AddApplicationModal({ isOpen, onClose, onSubmit }: AddApplicatio
       jobLink: '',
       salaryRange: '',
       applicationDate: new Date().toISOString().split('T')[0],
+      status: 'APPLIED',
       notes: ''
     });
     onClose();
@@ -132,6 +133,22 @@ export function AddApplicationModal({ isOpen, onClose, onSubmit }: AddApplicatio
                 type="url"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Status</label>
+            <Select value={formData.status} onValueChange={(value: ApplicationStatus) => handleChange('status', value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>

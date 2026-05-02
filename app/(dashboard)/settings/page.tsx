@@ -1,119 +1,104 @@
-'use client'
+'use client';
 
-import { User, Bell, Shield, Palette, HelpCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useSettings, useUpdateSettings, UpdateUserSettingsDto } from '@/hooks/useSettings';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 
 export default function Settings() {
+  const { data: settings, isLoading } = useSettings();
+  const updateSettingsMutation = useUpdateSettings();
+  const [formData, setFormData] = useState<Partial<UpdateUserSettingsDto>>({});
+
+  useEffect(() => {
+    if (!settings) return;
+
+    setFormData({
+      email: settings.email,
+      firstName: settings.firstName || '',
+      lastName: settings.lastName || '',
+    });
+  }, [settings]);
+
+  const handleSave = () => {
+    updateSettingsMutation.mutate(formData);
+  };
+
+  const handleFieldChange = (field: keyof UpdateUserSettingsDto, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-64 mb-8"></div>
+          <div className="h-48 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-neutral-900 mb-2">Settings</h1>
-        <p className="text-neutral-600">Manage your account and application preferences</p>
+      <div className="mb-4">
+        <Breadcrumbs
+          items={[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Settings' },
+          ]}
+        />
       </div>
 
-      <div className="max-w-4xl">
-        {/* Profile Settings */}
-        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <User className="w-5 h-5 text-neutral-600" />
-            <h2 className="text-xl font-semibold text-neutral-900">Profile</h2>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Name</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                placeholder="Your name"
-              />
-            </div>
-            <div>
+      <div className="max-w-3xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Settings</h1>
+          <p className="text-neutral-600">Manage your account profile.</p>
+        </div>
+
+        <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-6">
+          <h2 className="text-xl font-semibold text-neutral-900 mb-4">Profile Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
-              <input
+              <Input
                 type="email"
-                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                placeholder="your@email.com"
+                value={formData.email || ''}
+                onChange={(e) => handleFieldChange('email', e.target.value)}
+                placeholder="you@example.com"
               />
             </div>
-            <Button className="bg-teal-600 hover:bg-teal-700">Save Profile</Button>
-          </div>
-        </div>
-
-        {/* Notification Settings */}
-        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Bell className="w-5 h-5 text-neutral-600" />
-            <h2 className="text-xl font-semibold text-neutral-900">Notifications</h2>
-          </div>
-          <div className="space-y-3">
-            <label className="flex items-center gap-3">
-              <input type="checkbox" className="rounded text-teal-600" />
-              <span className="text-neutral-700">Email notifications for new interviews</span>
-            </label>
-            <label className="flex items-center gap-3">
-              <input type="checkbox" className="rounded text-teal-600" />
-              <span className="text-neutral-700">Weekly job search summary</span>
-            </label>
-            <label className="flex items-center gap-3">
-              <input type="checkbox" className="rounded text-teal-600" />
-              <span className="text-neutral-700">Application status changes</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Privacy Settings */}
-        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Shield className="w-5 h-5 text-neutral-600" />
-            <h2 className="text-xl font-semibold text-neutral-900">Privacy</h2>
-          </div>
-          <div className="space-y-3">
-            <label className="flex items-center gap-3">
-              <input type="checkbox" className="rounded text-teal-600" />
-              <span className="text-neutral-700">Make profile private</span>
-            </label>
-            <label className="flex items-center gap-3">
-              <input type="checkbox" className="rounded text-teal-600" />
-              <span className="text-neutral-700">Hide salary information</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Appearance Settings */}
-        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Palette className="w-5 h-5 text-neutral-600" />
-            <h2 className="text-xl font-semibold text-neutral-900">Appearance</h2>
-          </div>
-          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Theme</label>
-              <select className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="system">System</option>
-              </select>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">First Name</label>
+              <Input
+                value={formData.firstName || ''}
+                onChange={(e) => handleFieldChange('firstName', e.target.value)}
+                placeholder="First name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Last Name</label>
+              <Input
+                value={formData.lastName || ''}
+                onChange={(e) => handleFieldChange('lastName', e.target.value)}
+                placeholder="Last name"
+              />
             </div>
           </div>
         </div>
 
-        {/* Help & Support */}
-        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <HelpCircle className="w-5 h-5 text-neutral-600" />
-            <h2 className="text-xl font-semibold text-neutral-900">Help & Support</h2>
-          </div>
-          <div className="space-y-3">
-            <Button variant="outline" className="w-full justify-start">
-              View Documentation
-            </Button>
-            <Button variant="outline" className="w-full justify-start">
-              Contact Support
-            </Button>
-            <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700">
-              Delete Account
-            </Button>
-          </div>
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSave}
+            disabled={updateSettingsMutation.isPending}
+            className="bg-teal-600 hover:bg-teal-700"
+          >
+            {updateSettingsMutation.isPending ? 'Saving...' : 'Save Changes'}
+          </Button>
         </div>
       </div>
     </div>

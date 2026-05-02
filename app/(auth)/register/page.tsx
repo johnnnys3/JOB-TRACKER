@@ -6,13 +6,17 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { ApiError } from '@/services/api';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
   
   const { register } = useAuthContext();
   const router = useRouter();
@@ -21,6 +25,20 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+
+    // Validate firstName
+    if (!firstName.trim()) {
+      setError('First name is required');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate lastName
+    if (!lastName.trim()) {
+      setError('Last name is required');
+      setIsLoading(false);
+      return;
+    }
 
     // Validate passwords match
     if (password !== confirmPassword) {
@@ -37,13 +55,13 @@ export default function RegisterPage() {
     }
 
     try {
-      await register(email, password);
-      router.push('/login');
-    } catch (err: any) {
-      // Handle different error scenarios
-      if (err.response?.status === 409) {
+      await register(email, password, firstName, lastName);
+      setIsSuccess(true);
+      setError('');
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.statusCode === 409) {
         setError('An account with this email already exists');
-      } else if (err.response?.status === 400) {
+      } else if (err instanceof ApiError && err.statusCode === 400) {
         setError('Invalid email or password format');
       } else {
         setError('Registration failed. Please try again.');
@@ -57,19 +75,65 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Account created successfully!{' '}
-            <Link href="/login" className="font-medium text-primary hover:text-primary/90">
-              sign in to your new account
-            </Link>
-          </p>
+          {!isSuccess ? (
+            <>
+              <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Create your account
+              </h2>
+              <p className="mt-2 text-center text-sm text-gray-600">
+                Sign up to start tracking your job applications
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="mt-6 text-center text-3xl font-extrabold text-green-600">
+                Account created successfully!
+              </h2>
+              <p className="mt-2 text-center text-sm text-gray-600">
+                Your account has been created successfully.{' '}
+                <Link href="/login" className="font-medium text-primary hover:text-primary/90">
+                  Sign in to your new account
+                </Link>
+              </p>
+            </>
+          )}
         </div>
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {!isSuccess && (
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                  First Name
+                </label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className="mt-1"
+                  placeholder="First name"
+                  disabled={isLoading}
+                />
+              </div>
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                  Last Name
+                </label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  className="mt-1"
+                  placeholder="Last name"
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
@@ -141,6 +205,7 @@ export default function RegisterPage() {
             By creating an account, you agree to our terms of service and privacy policy.
           </div>
         </form>
+        )}
       </div>
     </div>
   );

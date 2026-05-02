@@ -8,9 +8,16 @@ export class InterviewsService {
   constructor(private prisma: PrismaService) {}
 
   async create(createInterviewDto: CreateInterviewDto, userId: string) {
+    if (!createInterviewDto.applicationId) {
+      throw new Error('Application is required');
+    }
+
     return this.prisma.interview.create({
       data: {
-        ...createInterviewDto,
+        stage: createInterviewDto.stage,
+        date: createInterviewDto.date,
+        notes: createInterviewDto.notes,
+        applicationId: createInterviewDto.applicationId,
         userId,
       },
       include: {
@@ -18,7 +25,7 @@ export class InterviewsService {
           select: {
             id: true,
             company: true,
-            position: true,
+            jobTitle: true,
           },
         },
       },
@@ -38,7 +45,7 @@ export class InterviewsService {
           select: {
             id: true,
             company: true,
-            position: true,
+            jobTitle: true,
           },
         },
       },
@@ -54,7 +61,7 @@ export class InterviewsService {
           select: {
             id: true,
             company: true,
-            position: true,
+            jobTitle: true,
           },
         },
       },
@@ -78,7 +85,7 @@ export class InterviewsService {
           select: {
             id: true,
             company: true,
-            position: true,
+            jobTitle: true,
           },
         },
       },
@@ -92,14 +99,13 @@ export class InterviewsService {
       where: { id },
       select: {
         id: true,
-        type: true,
         stage: true,
         date: true,
         application: {
           select: {
             id: true,
             company: true,
-            position: true,
+            jobTitle: true,
           },
         },
       },

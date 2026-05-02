@@ -20,7 +20,7 @@ async function apiRequest<T>(
   const config: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     },
     credentials: 'include', // For httpOnly cookies
     ...options,
@@ -37,17 +37,17 @@ async function apiRequest<T>(
     );
   }
 
-  return response.json();
+  return response.json() as Promise<T>;
 }
 
 export const api = {
   get: <T>(endpoint: string) => apiRequest<T>(endpoint),
-  post: <T>(endpoint: string, data?: any) =>
+  post: <T>(endpoint: string, data?: unknown) =>
     apiRequest<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     }),
-  patch: <T>(endpoint: string, data?: any) =>
+  patch: <T>(endpoint: string, data?: unknown) =>
     apiRequest<T>(endpoint, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,

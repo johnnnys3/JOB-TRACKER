@@ -6,6 +6,7 @@ import { UsersModule } from './modules/users/users.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { InterviewsModule } from './modules/interviews/interviews.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { TagsModule } from './modules/tags/tags.module';
 import { HealthModule } from './common/health/health.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { HealthModule } from './common/health/health.module';
     ApplicationsModule,
     InterviewsModule,
     AnalyticsModule,
+    TagsModule,
     HealthModule,
   ],
 })

@@ -1,5 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ApplicationStatus } from '@prisma/client';
+
+type TrendBucket = {
+  date: string;
+  total: number;
+  status: Partial<Record<ApplicationStatus, number>>;
+};
+
+type InterviewTrendBucket = {
+  date: string;
+  total: number;
+  stage: Record<string, number>;
+};
 
 @Injectable()
 export class AnalyticsService {
@@ -10,25 +23,44 @@ export class AnalyticsService {
       totalApplications,
       applicationsByStatus,
       totalInterviews,
-      interviewsByStatus,
+      interviewsByStage,
       recentApplications,
       upcomingInterviews,
+      applicationTrends,
     ] = await Promise.all([
       this.getTotalApplications(userId),
       this.getApplicationsByStatus(userId),
       this.getTotalInterviews(userId),
-      this.getInterviewsByStatus(userId),
+      this.getInterviewsByStage(userId),
       this.getRecentApplications(userId, 5),
       this.getUpcomingInterviews(userId, 5),
+      this.getApplicationTrends(userId),
     ]);
+    const statusDistribution = applicationsByStatus.reduce(
+      (acc, item) => ({
+        ...acc,
+        [item.status]: item.count,
+      }),
+      {} as Partial<Record<ApplicationStatus, number>>,
+    );
+    const interviewCount = statusDistribution.INTERVIEW || 0;
+    const offerCount = statusDistribution.OFFER || 0;
 
     return {
       totalApplications,
       applicationsByStatus,
       totalInterviews,
-      interviewsByStatus,
+      interviewsByStage,
       recentApplications,
       upcomingInterviews,
+      statusDistribution,
+      applicationTrends: applicationTrends.map(trend => ({
+        date: trend.date,
+        count: trend.total,
+      })),
+      interviewRate: totalApplications > 0 ? interviewCount / totalApplications : 0,
+      offerRate: totalApplications > 0 ? offerCount / totalApplications : 0,
+      activeApplications: (statusDistribution.APPLIED || 0) + interviewCount,
     };
   }
 
@@ -59,18 +91,18 @@ export class AnalyticsService {
     });
   }
 
-  async getInterviewsByStatus(userId: string) {
+  async getInterviewsByStage(userId: string) {
     const results = await this.prisma.interview.groupBy({
-      by: ['status'],
+      by: ['stage'],
       where: { userId },
       _count: {
-        status: true,
+        stage: true,
       },
     });
 
     return results.map(result => ({
-      status: result.status,
-      count: result._count.status,
+      stage: result.stage,
+      count: result._count.stage,
     }));
   }
 
@@ -82,7 +114,7 @@ export class AnalyticsService {
       select: {
         id: true,
         company: true,
-        position: true,
+        jobTitle: true,
         status: true,
         applicationDate: true,
       },
@@ -95,7 +127,6 @@ export class AnalyticsService {
       where: { 
         userId,
         date: { gte: now },
-        status: 'SCHEDULED',
       },
       take: limit,
       orderBy: { date: 'asc' },
@@ -104,7 +135,7 @@ export class AnalyticsService {
           select: {
             id: true,
             company: true,
-            position: true,
+            jobTitle: true,
           },
         },
       },
@@ -130,7 +161,7 @@ export class AnalyticsService {
     });
 
     // Group by date
-    const trends = applications.reduce((acc, app) => {
+    const trends = applications.reduce<Record<string, TrendBucket>>((acc, app) => {
       const date = app.applicationDate.toISOString().split('T')[0];
       if (!acc[date]) {
         acc[date] = { date, total: 0, status: {} };
@@ -156,21 +187,19 @@ export class AnalyticsService {
       },
       select: {
         date: true,
-        status: true,
-        type: true,
+        stage: true,
       },
       orderBy: { date: 'asc' },
     });
 
     // Group by date
-    const trends = interviews.reduce((acc, interview) => {
+    const trends = interviews.reduce<Record<string, InterviewTrendBucket>>((acc, interview) => {
       const date = interview.date.toISOString().split('T')[0];
       if (!acc[date]) {
-        acc[date] = { date, total: 0, status: {}, type: {} };
+        acc[date] = { date, total: 0, stage: {} };
       }
       acc[date].total++;
-      acc[date].status[interview.status] = (acc[date].status[interview.status] || 0) + 1;
-      acc[date].type[interview.type] = (acc[date].type[interview.type] || 0) + 1;
+      acc[date].stage[interview.stage] = (acc[date].stage[interview.stage] || 0) + 1;
       return acc;
     }, {});
 

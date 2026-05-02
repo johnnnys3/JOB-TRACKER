@@ -1,131 +1,130 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
+import { UpdateApplicationDto } from './dto/update-application.dto';
+import { CreateInterviewDto } from '../interviews/dto/create-interview.dto';
+import { Prisma } from '@prisma/client';
 
-// Define UpdateApplicationDto inline to resolve import issue
-import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { ApplicationStatus, JobType } from '@prisma/client';
+const applicationInclude = {
+  tags: {
+    include: {
+      tag: true,
+    },
+  },
+  interviews: {
+    orderBy: { date: 'desc' as const },
+  },
+} satisfies Prisma.ApplicationInclude;
 
-class UpdateApplicationDto {
-  @IsOptional()
-  @IsString()
+type ApplicationWithRelations = Prisma.ApplicationGetPayload<{
+  include: typeof applicationInclude;
+}>;
+
+export interface ApplicationFilters {
+  status?: string;
   company?: string;
-
-  @IsOptional()
-  @IsString()
-  position?: string;
-
-  @IsOptional()
-  @IsEnum(ApplicationStatus)
-  status?: ApplicationStatus;
-
-  @IsOptional()
-  @IsString()
-  location?: string;
-
-  @IsOptional()
-  @IsEnum(JobType)
-  jobType?: JobType;
-
-  @IsOptional()
-  @IsString()
-  salary?: string;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsString()
-  requirements?: string;
-
-  @IsOptional()
-  @IsDateString()
-  applicationDate?: string;
+  search?: string;
+  dateApplied?: string;
 }
 
 @Injectable()
 export class ApplicationsService {
   constructor(private prisma: PrismaService) {}
 
+  private formatApplication(application: ApplicationWithRelations) {
+    return {
+      ...application,
+      tags: application.tags.map(applicationTag => applicationTag.tag.name),
+    };
+  }
+
   async create(createApplicationDto: CreateApplicationDto, userId: string) {
-    return this.prisma.application.create({
+    const application = await this.prisma.application.create({
       data: {
         ...createApplicationDto,
         userId,
       },
-      include: {
-        tags: true,
-        interviews: {
-          orderBy: { date: 'desc' },
-        },
-      },
+      include: applicationInclude,
     });
+
+    return this.formatApplication(application);
   }
 
-  async findAll(userId: string, page = 1, limit = 10) {
+  async findAll(userId: string, page = 1, limit = 10, filters: ApplicationFilters = {}) {
     const skip = (page - 1) * limit;
+    const where: Prisma.ApplicationWhereInput = { userId };
+
+    if (filters.status) {
+      where.status = filters.status as Prisma.EnumApplicationStatusFilter['equals'];
+    }
+
+    if (filters.company) {
+      where.company = { contains: filters.company, mode: 'insensitive' };
+    }
+
+    if (filters.search) {
+      where.OR = [
+        { company: { contains: filters.search, mode: 'insensitive' } },
+        { jobTitle: { contains: filters.search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (filters.dateApplied) {
+      const start = new Date(filters.dateApplied);
+      const end = new Date(filters.dateApplied);
+      end.setDate(end.getDate() + 1);
+
+      where.applicationDate = {
+        gte: start,
+        lt: end,
+      };
+    }
     
     const [applications, total] = await Promise.all([
       this.prisma.application.findMany({
-        where: { userId },
+        where,
         skip,
         take: limit,
-        include: {
-          tags: true,
-          interviews: {
-            orderBy: { date: 'desc' },
-          },
-        },
+        include: applicationInclude,
         orderBy: { applicationDate: 'desc' },
       }),
       this.prisma.application.count({
-        where: { userId },
+        where,
       }),
     ]);
 
     return {
-      applications,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
+      data: applications.map(application => this.formatApplication(application)),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 
   async findOne(id: string, userId: string) {
     const application = await this.prisma.application.findFirst({
       where: { id, userId },
-      include: {
-        tags: true,
-        interviews: {
-          orderBy: { date: 'desc' },
-        },
-      },
+      include: applicationInclude,
     });
 
     if (!application) {
-      throw new Error('Application not found');
+      throw new NotFoundException('Application not found');
     }
 
-    return application;
+    return this.formatApplication(application);
   }
 
   async update(id: string, updateApplicationDto: UpdateApplicationDto, userId: string) {
     const application = await this.findOne(id, userId);
 
-    return this.prisma.application.update({
+    const updatedApplication = await this.prisma.application.update({
       where: { id },
       data: updateApplicationDto,
-      include: {
-        tags: true,
-        interviews: {
-          orderBy: { date: 'desc' },
-        },
-      },
+      include: applicationInclude,
     });
+
+    return this.formatApplication(updatedApplication);
   }
 
   async remove(id: string, userId: string) {
@@ -136,20 +135,22 @@ export class ApplicationsService {
       select: {
         id: true,
         company: true,
-        position: true,
+        jobTitle: true,
       },
     });
   }
 
   
   
-  async addInterview(applicationId: string, createInterviewDto: any, userId: string) {
+  async addInterview(applicationId: string, createInterviewDto: CreateInterviewDto, userId: string) {
     // Verify user owns the application
     await this.findOne(applicationId, userId);
 
     return this.prisma.interview.create({
       data: {
-        ...createInterviewDto,
+        stage: createInterviewDto.stage,
+        date: createInterviewDto.date,
+        notes: createInterviewDto.notes,
         applicationId,
         userId,
       },
@@ -177,28 +178,29 @@ export class ApplicationsService {
   }
 
   async addTag(applicationId: string, tagId: string, userId: string) {
-    const application = await this.findOne(applicationId, userId);
+    await this.findOne(applicationId, userId);
 
-    return this.prisma.applicationTag.create({
-      data: {
+    await this.prisma.applicationTag.upsert({
+      where: {
+        applicationId_tagId: {
+          applicationId,
+          tagId,
+        },
+      },
+      update: {},
+      create: {
         applicationId,
         tagId,
       },
-      include: {
-        tag: true,
-        application: {
-          include: {
-            tags: true,
-          },
-        },
-      },
     });
+
+    return this.findOne(applicationId, userId);
   }
 
   async removeTag(applicationId: string, tagId: string, userId: string) {
-    const application = await this.findOne(applicationId, userId);
+    await this.findOne(applicationId, userId);
 
-    return this.prisma.applicationTag.delete({
+    await this.prisma.applicationTag.delete({
       where: {
         applicationId_tagId: {
           applicationId,
@@ -206,5 +208,7 @@ export class ApplicationsService {
         },
       },
     });
+
+    return this.findOne(applicationId, userId);
   }
 }

@@ -117,14 +117,17 @@ export function Layout({ children }: LayoutProps) {
               <Menu className="h-5 w-5" />
             </Button>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome back!</span>
+              <span className="hidden sm:inline text-sm text-gray-600">Welcome back!</span>
+              <span className="sm:hidden text-sm text-gray-600">Welcome!</span>
             </div>
           </div>
         </div>
 
         {/* Page content */}
-        <main className="flex-1">
-          {children}
+        <main className="flex-1 min-h-screen">
+          <div className="w-full overflow-x-hidden">
+            {children}
+          </div>
         </main>
       </div>
     </div>

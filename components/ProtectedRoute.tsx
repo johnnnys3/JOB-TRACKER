@@ -2,21 +2,25 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuthState } from '@/hooks/useAuthState';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuthContext();
+  const { isAuthenticated, isLoading, shouldRedirect } = useAuthState();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login');
+    // Only redirect if we've completed initial auth check and user is not authenticated
+    if (shouldRedirect && typeof window !== 'undefined') {
+      // Check if we're not already on login page to prevent redirect loops
+      if (window.location.pathname !== '/login') {
+        router.push('/login');
+      }
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [shouldRedirect, router]);
 
   if (isLoading) {
     return (

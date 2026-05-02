@@ -1,5 +1,19 @@
 export type ApplicationStatus = 'WISHLIST' | 'APPLIED' | 'INTERVIEW' | 'OFFER' | 'REJECTED' | 'ACCEPTED';
 
+export interface ApiResponse<T> {
+  data: T;
+  message: string;
+}
+
+export const statusOptions: { value: ApplicationStatus; label: string }[] = [
+  { value: 'WISHLIST', label: 'Wishlist' },
+  { value: 'APPLIED', label: 'Applied' },
+  { value: 'INTERVIEW', label: 'Interview' },
+  { value: 'OFFER', label: 'Offer' },
+  { value: 'REJECTED', label: 'Rejected' },
+  { value: 'ACCEPTED', label: 'Accepted' },
+];
+
 export interface Interview {
   id: string;
   stage: string;
@@ -20,6 +34,7 @@ export interface Application {
   status: ApplicationStatus;
   notes?: string;
   interviews?: Interview[];
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -32,6 +47,7 @@ export interface CreateApplicationDto {
   jobLink?: string;
   salaryRange?: string;
   applicationDate: string;
+  status?: ApplicationStatus;
   notes?: string;
 }
 
@@ -42,8 +58,28 @@ export interface UpdateApplicationDto {
   location?: string;
   jobLink?: string;
   salaryRange?: string;
+  applicationDate?: string;
   status?: ApplicationStatus;
   notes?: string;
+  tags?: string[];
+}
+
+export interface CreateInterviewDto {
+  stage: string;
+  date: string;
+  notes?: string;
+}
+
+export interface UpdateInterviewDto {
+  stage?: string;
+  date?: string;
+  notes?: string;
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+  createdAt: string;
 }
 
 export interface User {
@@ -63,9 +99,17 @@ export interface DashboardStats {
 }
 
 export interface AnalyticsData {
-  statusDistribution: Record<ApplicationStatus, number>;
+  totalApplications: number;
+  totalInterviews: number;
+  applicationsByStatus: { status: ApplicationStatus; count: number }[];
+  interviewsByStage: { stage: string; count: number }[];
+  recentApplications: Pick<Application, 'id' | 'company' | 'jobTitle' | 'status' | 'applicationDate'>[];
+  upcomingInterviews: (Interview & {
+    application: Pick<Application, 'id' | 'company' | 'jobTitle'>;
+  })[];
+  statusDistribution: Partial<Record<ApplicationStatus, number>>;
   applicationTrends: { date: string; count: number }[];
-  companyStats: { company: string; count: number }[];
   interviewRate: number;
   offerRate: number;
+  activeApplications: number;
 }

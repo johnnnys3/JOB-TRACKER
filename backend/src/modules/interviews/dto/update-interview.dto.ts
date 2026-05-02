@@ -1,11 +1,6 @@
-import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { InterviewType, InterviewStatus } from '@prisma/client';
+import { IsString, IsOptional, IsDateString } from 'class-validator';
 
 export class UpdateInterviewDto {
-  @IsOptional()
-  @IsEnum(InterviewType)
-  type?: InterviewType;
-
   @IsOptional()
   @IsString()
   stage?: string;
@@ -25,8 +20,4 @@ export class UpdateInterviewDto {
   @IsOptional()
   @IsString()
   notes?: string;
-
-  @IsOptional()
-  @IsEnum(InterviewStatus)
-  status?: InterviewStatus;
 }

@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { ApplicationStatus, JobType } from '@prisma/client';
+import { ApplicationStatus } from '@prisma/client';
 
 export class UpdateApplicationDto {
   @IsOptional()
@@ -8,7 +8,7 @@ export class UpdateApplicationDto {
 
   @IsOptional()
   @IsString()
-  position?: string;
+  jobTitle?: string;
 
   @IsOptional()
   @IsEnum(ApplicationStatus)
@@ -19,12 +19,12 @@ export class UpdateApplicationDto {
   location?: string;
 
   @IsOptional()
-  @IsEnum(JobType)
-  jobType?: JobType;
+  @IsString()
+  jobLink?: string;
 
   @IsOptional()
   @IsString()
-  salary?: string;
+  salaryRange?: string;
 
   @IsOptional()
   @IsString()
@@ -32,7 +32,7 @@ export class UpdateApplicationDto {
 
   @IsOptional()
   @IsString()
-  requirements?: string;
+  notes?: string;
 
   @IsOptional()
   @IsDateString()

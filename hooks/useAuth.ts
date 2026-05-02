@@ -25,6 +25,9 @@ export const useAuth = () => {
       queryClient.setQueryData(['user'], null);
       queryClient.clear();
     },
+    onError: () => {
+      queryClient.setQueryData(['user'], null);
+    },
   });
 
   return {
@@ -38,7 +41,9 @@ export const useCurrentUser = () => {
   return useQuery({
     queryKey: ['user'],
     queryFn: () => authService.getCurrentUser(),
-    retry: false,
+    retry: 1, // Allow one retry for network issues
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false, // Prevent refetch on window focus to avoid auth flicker
+    refetchOnReconnect: true, // Allow refetch on network reconnect
   });
 };

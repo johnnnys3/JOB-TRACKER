@@ -1,4 +1,5 @@
 import { api } from './api';
+import { ApiResponse } from '@/types';
 
 export interface LoginDto {
   email: string;
@@ -8,31 +9,38 @@ export interface LoginDto {
 export interface RegisterDto {
   email: string;
   password: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface AuthResponse {
   user: {
     id: string;
     email: string;
+    firstName?: string | null;
+    lastName?: string | null;
     createdAt: string;
+    updatedAt?: string;
   };
-  message: string;
 }
 
 export const authService = {
   async login(credentials: LoginDto): Promise<AuthResponse> {
-    return api.post<AuthResponse>('/auth/login', credentials);
+    const response = await api.post<ApiResponse<AuthResponse>>('/auth/login', credentials);
+    return response.data;
   },
 
   async register(userData: RegisterDto): Promise<AuthResponse> {
-    return api.post<AuthResponse>('/auth/register', userData);
+    const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', userData);
+    return response.data;
   },
 
   async logout(): Promise<{ message: string }> {
-    return api.post<{ message: string }>('/auth/logout');
+    return api.post<{ data: null; message: string }>('/auth/logout');
   },
 
   async getCurrentUser(): Promise<AuthResponse['user']> {
-    return api.get<AuthResponse['user']>('/auth/me');
+    const response = await api.get<ApiResponse<AuthResponse['user']>>('/auth/me');
+    return response.data;
   },
 };

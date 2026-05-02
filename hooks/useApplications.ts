@@ -53,3 +53,29 @@ export const useDeleteApplication = () => {
     },
   });
 };
+
+export const useAddApplicationTag = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ applicationId, tagId }: { applicationId: string; tagId: string }) =>
+      applicationsService.addTag(applicationId, tagId),
+    onSuccess: (_, { applicationId }) => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
+    },
+  });
+};
+
+export const useRemoveApplicationTag = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ applicationId, tagId }: { applicationId: string; tagId: string }) =>
+      applicationsService.removeTag(applicationId, tagId),
+    onSuccess: (_, { applicationId }) => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
+    },
+  });
+};
