@@ -1,0 +1,355 @@
+# Project Recovery Progress
+
+## Current Status
+
+* Overall status: Phase 1 critical, Phase 2 major, and requested Phase 3 cleanup/polish pass complete; remaining work is broader optional test coverage.
+* Backend status: Build passing after schema-alignment fixes.
+* Frontend status: Type-check and production build passing.
+* Database status: Prisma schema and migration history are aligned with the PRD/current schema; local database migration status is up to date.
+* Authentication status: Login now validates email/password before JWT signing; broader auth/session behavior still needs endpoint-level verification.
+
+## Completed Fixes
+
+* [2026-05-02 17:18 +01:00] Fix: Restored backend compilation against the current Prisma schema.
+
+  * Files changed:
+    * backend/src/common/types/authenticated-request.ts
+    * backend/src/modules/analytics/analytics.controller.ts
+    * backend/src/modules/analytics/analytics.service.ts
+    * backend/src/modules/applications/applications.controller.ts
+    * backend/src/modules/applications/applications.service.ts
+    * backend/src/modules/applications/dto/create-application.dto.ts
+    * backend/src/modules/applications/dto/update-application.dto.ts
+    * backend/src/modules/auth/dto/login.dto.ts
+    * backend/src/modules/interviews/dto/create-interview.dto.ts
+    * backend/src/modules/interviews/dto/update-interview.dto.ts
+    * backend/src/modules/interviews/interviews.controller.ts
+    * backend/src/modules/interviews/interviews.service.ts
+    * backend/src/modules/users/dto/create-user.dto.ts
+    * backend/src/types/bcrypt.d.ts
+  * What changed:
+    * Removed stale Prisma references to removed JobType, InterviewType, InterviewStatus, interview.status, interview.type, time, and location fields.
+    * Aligned application and interview DTOs with the PRD/current Prisma schema.
+    * Added definite assignment assertions to required DTO fields for strict TypeScript.
+    * Added a shared AuthenticatedRequest type for guarded controller request parameters.
+    * Added a local bcrypt module declaration to satisfy strict compilation without changing dependencies.
+    * Updated analytics interview grouping to use interview stage and removed the non-existent scheduled status filter.
+  * Verification result:
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 17:19 +01:00] Fix: Corrected login credential validation before JWT signing.
+
+  * Files changed:
+    * backend/src/modules/auth/auth.controller.ts
+    * backend/src/modules/auth/auth.service.ts
+  * What changed:
+    * Changed `AuthService.login` to accept `LoginDto`, call `validateUser`, and throw `UnauthorizedException` for invalid credentials.
+    * Ensured JWT payloads are created only from a persisted, sanitized user returned by password validation.
+    * Shared token response creation between login and registration so registration no longer calls login with a non-credential object.
+    * Typed `/auth/me` request access with `AuthenticatedRequest`.
+  * Verification result:
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 17:24 +01:00] Fix: Reconciled Prisma schema and migration history with the PRD data model.
+
+  * Files changed:
+    * backend/prisma/schema.prisma
+    * backend/prisma/migrations/20260502172000_align_prd_schema/migration.sql
+  * What changed:
+    * Added the PRD-required `Application.createdAt` index to `schema.prisma`.
+    * Added a corrective migration that maps old application status values to the PRD enum, renames old application columns to `jobTitle`, `salaryRange`, `notes`, and `updatedAt`, adds `jobLink` and `createdAt`, removes obsolete job/interview enum columns, removes tag color, and creates the `Application_createdAt_idx` index.
+    * Fixed the migration after the shadow database reported that `jobType` still depended on the old `JobType` enum.
+  * Verification result:
+    * Passed: `npx.cmd prisma validate` from `backend/`.
+    * Passed: `npx.cmd prisma migrate dev --skip-generate` from `backend/`.
+    * Passed: `npx.cmd prisma migrate status` from `backend/`; database schema is up to date.
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 17:27 +01:00] Fix: Aligned application CRUD DTOs and response contract.
+
+  * Files changed:
+    * backend/src/modules/applications/applications.controller.ts
+    * backend/src/modules/applications/applications.service.ts
+    * backend/src/modules/applications/dto/create-application.dto.ts
+    * backend/src/modules/applications/dto/update-application.dto.ts
+    * services/applications.ts
+  * What changed:
+    * Application CRUD endpoints now return the PRD success wrapper `{ data, message }`.
+    * Application list now returns a stable paginated payload `{ data, total, page, limit, totalPages }` instead of `{ applications, pagination }`.
+    * Frontend application service unwraps the PRD response wrapper so existing hooks continue to receive application objects and paginated data.
+    * Backend application DTOs now accept PRD fields `jobLink`, `salaryRange`, and `notes`, and no longer accept removed fields `salary` and `requirements`.
+    * Application responses now format tag relations as tag name strings instead of raw join rows.
+    * Missing applications now throw `NotFoundException` instead of a plain `Error`.
+  * Verification result:
+    * Passed: `npm.cmd run build` from `backend/`.
+    * Blocked: `node_modules\.bin\tsc.cmd --noEmit` from project root still fails before frontend checks because root `tsconfig.json` includes `backend/dist/**/*.d.ts`; this remains tracked as a critical frontend type-check/root config issue.
+
+* [2026-05-02 17:28 +01:00] Fix: Removed unsafe cross-user UsersController routes.
+
+  * Files changed:
+    * backend/src/modules/users/users.controller.ts
+    * backend/src/modules/users/users.service.ts
+    * backend/src/modules/users/dto/update-profile.dto.ts
+  * What changed:
+    * Replaced arbitrary `/users`, `/users/:id`, and password-unsafe user creation/update/delete routes with scoped `GET /users/me` and `PATCH /users/me`.
+    * Added a profile-only update DTO so authenticated users can update only email, firstName, and lastName through the users module.
+    * Kept registration routed through `AuthService.register`, preserving bcrypt hashing before user creation.
+  * Verification result:
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 17:34 +01:00] Fix: Restored frontend type-check and aligned interview response wrappers.
+
+  * Files changed:
+    * app/(dashboard)/applications/[id]/page.tsx
+    * backend/src/modules/applications/applications.controller.ts
+    * backend/src/modules/interviews/interviews.controller.ts
+    * components/EditApplicationModal.tsx
+    * components/StatusBadge.tsx
+    * hooks/useSettings.ts
+    * mockData.ts
+    * services/interviews.ts
+    * services/tags.ts
+    * tsconfig.json
+    * types/index.ts
+  * What changed:
+    * Root frontend `tsconfig.json` now excludes the backend project and generated backend output.
+    * Status badge config now uses uppercase PRD enum keys.
+    * Edit application modal no longer sends `id` inside the update body and the shared update DTO includes `applicationDate`.
+    * Application detail imports and dispatches correct interview update/create DTOs.
+    * Interview backend endpoints now return `{ data, message }`, and frontend interview service unwraps that shape.
+    * Settings and tags services now use explicit API response generics to remove `unknown` response errors; settings/tags behavior remains tracked as Phase 2 work.
+    * Stale mock data now uses PRD field names and uppercase statuses.
+  * Verification result:
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 17:36 +01:00] Fix: Replaced broken settings API calls with scoped profile settings.
+
+  * Files changed:
+    * app/(dashboard)/settings/page.tsx
+    * hooks/useSettings.ts
+  * What changed:
+    * Settings page now uses `GET /users/me` and `PATCH /users/me` instead of missing `/users/settings`.
+    * Removed persistence for notification, privacy, appearance, phone, and location fields because they are not defined in the PRD data model.
+    * Settings form now edits only email, firstName, and lastName, matching the safe users profile endpoint.
+  * Verification result:
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 17:39 +01:00] Fix: Implemented minimal tags flow end-to-end.
+
+  * Files changed:
+    * app/(dashboard)/applications/[id]/page.tsx
+    * backend/src/app.module.ts
+    * backend/src/modules/applications/applications.controller.ts
+    * backend/src/modules/applications/applications.service.ts
+    * backend/src/modules/tags/dto/create-tag.dto.ts
+    * backend/src/modules/tags/tags.controller.ts
+    * backend/src/modules/tags/tags.module.ts
+    * backend/src/modules/tags/tags.service.ts
+    * components/TagManager.tsx
+    * hooks/useApplications.ts
+    * services/applications.ts
+  * What changed:
+    * Added authenticated `GET /tags`, `POST /tags`, and `DELETE /tags/:id` endpoints with PRD response wrappers.
+    * Added tag creation via upsert by name to avoid duplicate tag records.
+    * Application tag add/remove endpoints now return the updated application instead of raw join rows.
+    * Added frontend mutations for linking and unlinking tags on an application.
+    * TagManager now creates or reuses tags, links them to the current application, and unlinks existing tags through the backend.
+  * Verification result:
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 17:42 +01:00] Fix: Added server-side application filtering, search, and pagination controls.
+
+  * Files changed:
+    * app/(dashboard)/applications/page.tsx
+    * backend/src/modules/applications/applications.controller.ts
+    * backend/src/modules/applications/applications.service.ts
+    * services/applications.ts
+  * What changed:
+    * Backend list endpoint now supports `status`, `company`, `search`, and `dateApplied` query parameters scoped to the authenticated user.
+    * Search now runs server-side across company and jobTitle as required by the PRD.
+    * Frontend applications page now passes query params into `useApplications` instead of filtering only the loaded page in memory.
+    * Added simple previous/next pagination controls using backend `totalPages`.
+    * List limit is capped at 100 on the backend.
+  * Verification result:
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 17:44 +01:00] Fix: Aligned analytics frontend/backend summary contract.
+
+  * Files changed:
+    * app/(dashboard)/analytics/page.tsx
+    * backend/src/modules/analytics/analytics.controller.ts
+    * backend/src/modules/analytics/analytics.service.ts
+    * services/analytics.ts
+    * types/index.ts
+  * What changed:
+    * `/analytics/summary` now returns the PRD success wrapper `{ data, message }`.
+    * Backend summary now includes status distribution, application trends, interview rate, offer rate, active applications, recent applications, and upcoming interviews in one contract.
+    * Frontend analytics service unwraps the summary response.
+    * Analytics page no longer fetches applications separately to derive metrics locally.
+  * Verification result:
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 17:46 +01:00] Fix: Hardened deployment CORS and auth cookie settings.
+
+  * Files changed:
+    * backend/src/main.ts
+    * backend/src/modules/auth/auth.controller.ts
+  * What changed:
+    * Backend CORS now reads `CORS_ORIGIN` first, falls back to `FRONTEND_URL`, and supports comma-separated allowed origins.
+    * Auth cookie now uses `SameSite=None; Secure` in production for cross-site frontend/backend deployments.
+    * Local development auth cookie now uses `SameSite=Lax` with `secure=false`.
+    * Logout clears the cookie using matching deployment-aware cookie options.
+  * Verification result:
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 17:49 +01:00] Fix: Wrapped auth endpoints in the PRD success response format.
+
+  * Files changed:
+    * backend/src/modules/auth/auth.controller.ts
+    * backend/src/modules/auth/auth.service.ts
+    * services/auth.ts
+  * What changed:
+    * Auth register, login, me, and logout endpoints now return `{ data, message }`.
+    * Frontend auth service unwraps auth responses so hooks/context keep their existing service-level contract.
+    * Registration now sets the same httpOnly auth cookie as login.
+    * Auth response user now includes timestamps required by the frontend `User` type.
+  * Verification result:
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 17:52 +01:00] Fix: Added focused auth login validation tests.
+
+  * Files changed:
+    * backend/src/modules/auth/auth.service.spec.ts
+  * What changed:
+    * Added tests proving login rejects missing users.
+    * Added tests proving login rejects invalid passwords without signing a JWT.
+    * Added tests proving valid credentials sign a token using the persisted user id.
+  * Verification result:
+    * Passed: `npm.cmd test -- auth.service.spec.ts --runInBand` from `backend/`.
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 17:54 +01:00] Fix: Wired application detail quick-action buttons.
+
+  * Files changed:
+    * app/(dashboard)/applications/[id]/page.tsx
+  * What changed:
+    * Add Note and Update Status now open the existing edit application modal.
+    * Schedule Interview now opens the existing interview modal.
+  * Verification result:
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 18:00 +01:00] Fix: Restored frontend production build.
+
+  * Files changed:
+    * app/(dashboard)/applications/[id]/page.tsx
+  * What changed:
+    * Updated the dynamic application detail page props to match Next.js 15 generated `PageProps` by unwrapping promised route params with React `use`.
+  * Verification result:
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from project root when run outside the sandbox.
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-02 18:28 +01:00] Fix: Refactored shared frontend types, removed stale mock data, and polished dashboard/application UI.
+
+  * Files changed:
+    * app/(auth)/register/page.tsx
+    * app/(dashboard)/analytics/page.tsx
+    * app/(dashboard)/applications/[id]/page.tsx
+    * app/(dashboard)/applications/page.tsx
+    * app/(dashboard)/dashboard/page.tsx
+    * backend/src/common/strategies/jwt.strategy.ts
+    * backend/src/modules/auth/auth.service.ts
+    * components/AddApplicationModal.tsx
+    * components/EditApplicationModal.tsx
+    * components/InterviewModal.tsx
+    * components/TagManager.tsx
+    * hooks/useAuth.ts
+    * hooks/useInterviews.ts
+    * hooks/useSettings.ts
+    * mockData.ts
+    * services/analytics.ts
+    * services/api.ts
+    * services/applications.ts
+    * services/auth.ts
+    * services/interviews.ts
+    * services/tags.ts
+    * types/index.ts
+  * What changed:
+    * Centralized the frontend `ApiResponse<T>` type and removed duplicate response interfaces from service modules.
+    * Deleted stale `mockData.ts`; status options now live with the shared application status type.
+    * Removed unused imports and redundant handlers from application detail and application list flows.
+    * Replaced unsafe frontend `any` handling in registration with `ApiError` checks.
+    * Replaced garbled modal close text with lucide close icons and accessible labels.
+    * Switched Dashboard to consume `/analytics/summary` instead of fetching up to 100 applications and deriving stats locally.
+    * Added an application create status selector and an empty state for filtered application results.
+    * Tightened API request body types from `any` to `unknown`.
+    * Typed backend JWT payload and auth registration input.
+  * Verification result:
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from `backend/`.
+    * Passed: `npm.cmd test -- auth.service.spec.ts --runInBand` from `backend/`.
+    * Passed: `npm.cmd run build` from project root when run outside the sandbox.
+
+* [2026-05-02 18:32 +01:00] Fix: Removed confirmed unused files and ignored regenerated TypeScript build metadata.
+
+  * Files changed:
+    * .gitignore
+    * backend/cookies.txt
+    * backend/prisma/seed.ts
+    * backend/src/modules/users/dto/update-user.dto.ts
+    * backend/src/modules/users/users.service.ts
+    * tsconfig.tsbuildinfo
+  * What changed:
+    * Deleted a local cookie artifact that is not used by the application.
+    * Deleted an obsolete Prisma seed script that was not wired into package scripts and referenced stale test data.
+    * Deleted the unused user update DTO and removed obsolete users service methods left over from the removed arbitrary user CRUD routes.
+    * Deleted generated `tsconfig.tsbuildinfo` and added `*.tsbuildinfo` to `.gitignore` so it is not tracked again.
+  * Verification result:
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from `backend/`.
+    * Passed: `npm.cmd test -- auth.service.spec.ts --runInBand` from `backend/`.
+    * Passed: `npm.cmd run build` from project root when run outside the sandbox.
+
+## Active Issues
+
+### Critical
+
+* [x] Issue: Authentication login does not validate email/password before signing a JWT.
+* [x] Issue: Prisma migration history does not match the current PRD-aligned schema.
+* [x] Issue: Backend application DTO/service/API response contract is not fully aligned with frontend and PRD response format.
+* [x] Issue: Frontend type-check fails.
+* [x] Issue: UsersController exposes unsafe cross-user CRUD and violates data isolation.
+
+### Major
+
+* [x] Issue: Status badge enum mismatch.
+* [x] Issue: Missing settings route or incorrect frontend settings calls.
+* [x] Issue: Tags flow is not implemented end-to-end.
+* [x] Issue: Filtering/search/pagination gaps.
+* [x] Issue: Analytics frontend-backend contract mismatch.
+* [x] Issue: Deployment cookie/CORS issues.
+* [x] Issue: Inconsistent PRD response format.
+
+### Minor
+
+* [ ] Issue: Missing tests.
+* [x] Issue: Root TypeScript config issues.
+* [x] Issue: Placeholder UI actions.
+* [x] Issue: Stale mock data.
+* [x] Issue: Code cleanup and refactoring.
+* [x] Issue: UI polish and performance improvements.
+
+## Next Steps
+
+1. Add broader tests for applications, interviews, analytics, and user isolation.
+2. Run an end-to-end browser smoke test against a live backend and frontend.
+3. Review deployment environment values before production release.

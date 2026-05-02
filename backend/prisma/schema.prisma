@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String
+  firstName    String?
+  lastName     String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  applications Application[]
+  interviews   Interview[]
+
+  @@index([email])
+}
+
+model Application {
+  id              String            @id @default(cuid())
+  company         String
+  jobTitle        String
+  description     String?
+  location        String?
+  jobLink         String?
+  salaryRange     String?
+  applicationDate DateTime          @default(now())
+  status          ApplicationStatus @default(APPLIED)
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  // Relations
+  userId      String
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interviews  Interview[]
+  tags        ApplicationTag[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([company])
+  @@index([applicationDate])
+}
+
+model Interview {
+  id          String   @id @default(cuid())
+  stage       String
+  date        DateTime
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([userId])
+  @@index([date])
+}
+
+model Tag {
+  id          String @id @default(cuid())
+  name        String @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  applications ApplicationTag[]
+}
+
+// Junction table for Application-Tag many-to-many relationship
+model ApplicationTag {
+  applicationId String
+  tagId         String
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  tag         Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([applicationId, tagId])
+}
+
+enum ApplicationStatus {
+  WISHLIST
+  APPLIED
+  INTERVIEW
+  OFFER
+  REJECTED
+  ACCEPTED
+}
