@@ -76,6 +76,11 @@ export default function LoginPage() {
                 className="mt-1"
                 placeholder="Enter your password"
               />
+              <div className="mt-2 text-right">
+                <Link href="/forgot-password" className="text-sm font-medium text-primary hover:text-primary/90">
+                  Forgot password?
+                </Link>
+              </div>
             </div>
           </div>
 

@@ -13,6 +13,10 @@ export interface RegisterDto {
   lastName: string;
 }
 
+export interface ForgotPasswordResponse {
+  resetUrl: string | null;
+}
+
 export interface AuthResponse {
   user: {
     id: string;
@@ -33,6 +37,14 @@ export const authService = {
   async register(userData: RegisterDto): Promise<AuthResponse> {
     const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', userData);
     return response.data;
+  },
+
+  async forgotPassword(email: string): Promise<ApiResponse<ForgotPasswordResponse>> {
+    return api.post<ApiResponse<ForgotPasswordResponse>>('/auth/forgot-password', { email });
+  },
+
+  async resetPassword(token: string, password: string): Promise<ApiResponse<null>> {
+    return api.post<ApiResponse<null>>('/auth/reset-password', { token, password });
   },
 
   async logout(): Promise<{ message: string }> {

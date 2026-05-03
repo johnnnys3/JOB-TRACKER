@@ -4,6 +4,8 @@ import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 const getAuthCookieOptions = (): CookieOptions => {
@@ -47,6 +49,26 @@ export class AuthController {
     return {
       data: result,
       message: 'success',
+    };
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    const result = await this.authService.forgotPassword(forgotPasswordDto);
+
+    return {
+      data: result,
+      message: 'If an account exists for that email, a password reset link has been created.',
+    };
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    const result = await this.authService.resetPassword(resetPasswordDto);
+
+    return {
+      data: null,
+      message: result.message,
     };
   }
 

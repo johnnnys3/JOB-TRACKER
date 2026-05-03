@@ -42,6 +42,54 @@ export class UsersService {
     });
   }
 
+  async setPasswordResetToken(id: string, tokenHash: string, expiresAt: Date) {
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        passwordResetTokenHash: tokenHash,
+        passwordResetExpiresAt: expiresAt,
+      },
+    });
+  }
+
+  async findByPasswordResetTokenHash(tokenHash: string) {
+    return this.prisma.user.findFirst({
+      where: {
+        passwordResetTokenHash: tokenHash,
+        passwordResetExpiresAt: {
+          gt: new Date(),
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async updatePassword(id: string, password: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        password,
+        passwordResetTokenHash: null,
+        passwordResetExpiresAt: null,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
   async updateProfile(id: string, updateProfileDto: UpdateProfileDto) {
     return this.prisma.user.update({
       where: { id },
