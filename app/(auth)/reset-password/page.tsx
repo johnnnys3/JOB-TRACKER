@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authService } from '@/services/auth';
 import { ApiError } from '@/services/api';
+import { AuthShell } from '@/components/AuthShell';
+import { AlertMessage } from '@/components/AlertMessage';
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -57,21 +59,11 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Choose a new password
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter and confirm your new password.
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+    <AuthShell title="Choose a new password" description="Create a secure password for your account.">
+        <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-foreground">
                 New password
               </label>
               <Input
@@ -80,7 +72,7 @@ function ResetPasswordForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1"
+                className="mt-2"
                 placeholder="Enter your new password"
                 disabled={isLoading || isSuccess}
                 minLength={6}
@@ -88,7 +80,7 @@ function ResetPasswordForm() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">
                 Confirm new password
               </label>
               <Input
@@ -97,7 +89,7 @@ function ResetPasswordForm() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="mt-1"
+                className="mt-2"
                 placeholder="Confirm your new password"
                 disabled={isLoading || isSuccess}
                 minLength={6}
@@ -106,35 +98,30 @@ function ResetPasswordForm() {
           </div>
 
           {isSuccess && (
-            <div className="text-green-700 text-sm text-center bg-green-50 p-3 rounded-md">
-              Password reset successfully. Redirecting to sign in...
-            </div>
+            <AlertMessage variant="success">Password reset successfully. Redirecting to sign in...</AlertMessage>
           )}
 
           {error && (
-            <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-md">
-              {error}
-            </div>
+            <AlertMessage variant="error">{error}</AlertMessage>
           )}
 
-          <Button type="submit" className="w-full" disabled={isLoading || isSuccess}>
-            {isLoading ? 'Resetting password...' : 'Reset password'}
+          <Button type="submit" className="w-full" disabled={isSuccess} loading={isLoading}>
+            Reset password
           </Button>
 
           <div className="text-center">
-            <Link href="/login" className="text-sm font-medium text-primary hover:text-primary/90">
+            <Link href="/login" className="text-sm font-semibold text-primary hover:underline">
               Back to sign in
             </Link>
           </div>
         </form>
-      </div>
-    </div>
+    </AuthShell>
   );
 }
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
       <ResetPasswordForm />
     </Suspense>
   );

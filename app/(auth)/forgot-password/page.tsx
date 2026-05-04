@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authService } from '@/services/auth';
+import { AuthShell } from '@/components/AuthShell';
+import { AlertMessage } from '@/components/AlertMessage';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -32,20 +34,10 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Reset your password
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your email and we will create a reset link.
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+    <AuthShell title="Reset your password" description="Enter your email and we'll send reset instructions.">
+        <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-foreground">
               Email address
             </label>
             <Input
@@ -54,44 +46,39 @@ export default function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="mt-1"
+              className="mt-2"
               placeholder="Enter your email"
               disabled={isLoading}
             />
           </div>
 
           {message && (
-            <div className="text-green-700 text-sm bg-green-50 p-3 rounded-md">
-              {message}
-            </div>
+            <AlertMessage variant="success">{message}</AlertMessage>
           )}
 
           {resetUrl && (
-            <div className="text-sm bg-blue-50 p-3 rounded-md break-words">
-              <div className="font-medium text-gray-900 mb-1">Development reset link</div>
-              <Link href={resetUrl} className="text-primary hover:text-primary/90">
+            <div className="break-words rounded-2xl border border-teal-200 bg-teal-50 p-3 text-sm">
+              <div className="mb-1 font-semibold text-foreground">Development reset link</div>
+              <Link href={resetUrl} className="font-medium text-primary hover:underline">
                 {resetUrl}
               </Link>
             </div>
           )}
 
           {error && (
-            <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-md">
-              {error}
-            </div>
+            <AlertMessage variant="error">{error}</AlertMessage>
           )}
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Creating link...' : 'Create reset link'}
+          <Button type="submit" className="w-full" loading={isLoading}>
+            Send reset link
           </Button>
 
           <div className="text-center">
-            <Link href="/login" className="text-sm font-medium text-primary hover:text-primary/90">
+            <Link href="/login" className="text-sm font-semibold text-primary hover:underline">
               Back to sign in
             </Link>
           </div>
         </form>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

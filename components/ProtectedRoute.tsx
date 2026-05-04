@@ -24,8 +24,15 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+      <div className="app-grid-bg flex min-h-screen items-center justify-center bg-background p-6">
+        <div className="frosted-surface w-full max-w-sm rounded-3xl p-6">
+          <div className="h-10 w-40 animate-pulse rounded-2xl bg-white/70" />
+          <div className="mt-6 space-y-3">
+            <div className="h-4 w-full animate-pulse rounded-xl bg-white/70" />
+            <div className="h-4 w-3/4 animate-pulse rounded-xl bg-white/70" />
+          </div>
+          <div className="mt-6 h-12 animate-pulse rounded-2xl bg-white/70" />
+        </div>
       </div>
     );
   }

@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { ApiError } from '@/services/api';
+import { AuthShell } from '@/components/AuthShell';
+import { AlertMessage } from '@/components/AlertMessage';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -72,39 +74,25 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8">
-        <div>
-          {!isSuccess ? (
-            <>
-              <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                Create your account
-              </h2>
-              <p className="mt-2 text-center text-sm text-gray-600">
-                Sign up to start tracking your job applications
-              </p>
-            </>
-          ) : (
-            <>
-              <h2 className="mt-6 text-center text-3xl font-extrabold text-green-600">
-                Account created successfully!
-              </h2>
-              <p className="mt-2 text-center text-sm text-gray-600">
-                Your account has been created successfully.{' '}
-                <Link href="/login" className="font-medium text-primary hover:text-primary/90">
-                  Sign in to your new account
-                </Link>
-              </p>
-            </>
-          )}
-        </div>
+    <AuthShell
+      title={isSuccess ? 'Account created' : 'Create your workspace'}
+      description={isSuccess ? (
+        <>
+          Your account is ready.{' '}
+          <Link href="/login" className="font-semibold text-primary hover:underline">
+            Sign in to continue
+          </Link>
+        </>
+      ) : 'Start organizing your job search in minutes.'}
+      variant="register"
+    >
         
         {!isSuccess && (
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="firstName" className="block text-sm font-medium text-foreground">
                   First Name
                 </label>
                 <Input
@@ -113,13 +101,13 @@ export default function RegisterPage() {
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
-                  className="mt-1"
+                  className="mt-2"
                   placeholder="First name"
                   disabled={isLoading}
                 />
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="lastName" className="block text-sm font-medium text-foreground">
                   Last Name
                 </label>
                 <Input
@@ -128,14 +116,14 @@ export default function RegisterPage() {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
-                  className="mt-1"
+                  className="mt-2"
                   placeholder="Last name"
                   disabled={isLoading}
                 />
               </div>
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-foreground">
                 Email address
               </label>
               <Input
@@ -144,14 +132,14 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1"
+                className="mt-2"
                 placeholder="Enter your email"
                 disabled={isLoading}
               />
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-foreground">
                 Password
               </label>
               <Input
@@ -160,7 +148,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1"
+                className="mt-2"
                 placeholder="Enter your password (min 6 characters)"
                 disabled={isLoading}
                 minLength={6}
@@ -168,7 +156,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">
                 Confirm Password
               </label>
               <Input
@@ -177,7 +165,7 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="mt-1"
+                className="mt-2"
                 placeholder="Confirm your password"
                 disabled={isLoading}
                 minLength={6}
@@ -186,27 +174,18 @@ export default function RegisterPage() {
           </div>
 
           {error && (
-            <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-md">
-              {error}
-            </div>
+            <AlertMessage variant="error">{error}</AlertMessage>
           )}
 
-          <div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Creating account...' : 'Create account'}
-            </Button>
-          </div>
+          <Button type="submit" className="w-full" loading={isLoading}>
+            Create account
+          </Button>
 
-          <div className="text-xs text-gray-500 text-center">
+          <div className="text-center text-xs leading-5 text-muted-foreground">
             By creating an account, you agree to our terms of service and privacy policy.
           </div>
         </form>
         )}
-      </div>
-    </div>
+    </AuthShell>
   );
 }

@@ -1,5 +1,11 @@
-import { redirect } from 'next/navigation'
+import { HeroSection } from '@/components/HeroSection'
+import { SocialProofSection } from '@/components/SocialProofSection'
 
 export default function HomePage() {
-  redirect('/dashboard')
+  return (
+    <>
+      <HeroSection />
+      <SocialProofSection />
+    </>
+  )
 }
