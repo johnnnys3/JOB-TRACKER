@@ -170,7 +170,7 @@ The intended production setup is:
 - Backend on Railway
 - PostgreSQL on Neon or another managed PostgreSQL provider
 
-Read [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment instructions and [PRODUCTION_CHECKLIST.md](./PRODUCTION_CHECKLIST.md) for the release checklist.
+Read [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment instructions 
 
 Production essentials:
 
