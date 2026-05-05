@@ -10,6 +10,7 @@ describe('InterviewsService', () => {
       create: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      count: jest.fn(),
     },
   };
 
@@ -99,8 +100,13 @@ describe('InterviewsService', () => {
   it('verifies application ownership before listing interviews by application', async () => {
     prisma.application.findFirst.mockResolvedValue({ id: 'application-1' });
     prisma.interview.findMany.mockResolvedValue([]);
+    prisma.interview.count.mockResolvedValue(0);
 
-    await service.findByApplication('application-1', 'user-1');
+    await service.findByApplication('application-1', 'user-1', {
+      page: 1,
+      limit: 25,
+      skip: 0,
+    });
 
     expect(prisma.application.findFirst).toHaveBeenCalledWith({
       where: { id: 'application-1', userId: 'user-1' },
@@ -111,6 +117,8 @@ describe('InterviewsService', () => {
         userId: 'user-1',
         applicationId: 'application-1',
       },
+      skip: 0,
+      take: 25,
       include: {
         application: {
           select: {
@@ -121,6 +129,12 @@ describe('InterviewsService', () => {
         },
       },
       orderBy: { date: 'asc' },
+    });
+    expect(prisma.interview.count).toHaveBeenCalledWith({
+      where: {
+        userId: 'user-1',
+        applicationId: 'application-1',
+      },
     });
   });
 });

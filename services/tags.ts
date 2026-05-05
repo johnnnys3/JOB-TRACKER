@@ -1,5 +1,5 @@
 import { api } from './api';
-import { ApiResponse, Tag } from '@/types';
+import { ApiResponse, PaginatedResponse, Tag } from '@/types';
 
 export interface CreateTagDto {
   name: string;
@@ -7,8 +7,8 @@ export interface CreateTagDto {
 
 export const tagsService = {
   getAll: async (): Promise<Tag[]> => {
-    const response = await api.get<ApiResponse<Tag[]>>('/tags');
-    return response.data;
+    const response = await api.get<ApiResponse<PaginatedResponse<Tag>>>('/tags?limit=100');
+    return response.data.data;
   },
 
   create: async (data: CreateTagDto): Promise<Tag> => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Bell, Camera, CreditCard, FileText, Globe, Link as LinkIcon, Mail, Shield, User, type LucideIcon } from 'lucide-react';
+import { Mail, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSettings, useUpdateSettings, UpdateUserSettingsDto } from '@/hooks/useSettings';
@@ -10,11 +10,13 @@ import { PageHeader } from '@/components/PageHeader';
 import { PageLoadingState } from '@/components/LoadingState';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertMessage } from '@/components/AlertMessage';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function Settings() {
   const { data: settings, isLoading, error } = useSettings();
   const updateSettingsMutation = useUpdateSettings();
   const [formData, setFormData] = useState<Partial<UpdateUserSettingsDto>>({});
+  const { notify } = useToast();
 
   useEffect(() => {
     if (!settings) return;
@@ -27,7 +29,10 @@ export default function Settings() {
   }, [settings]);
 
   const handleSave = () => {
-    updateSettingsMutation.mutate(formData);
+    updateSettingsMutation.mutate(formData, {
+      onSuccess: () => notify('Settings saved', 'success'),
+      onError: () => notify('Settings could not be saved', 'error'),
+    });
   };
 
   const handleFieldChange = (field: keyof UpdateUserSettingsDto, value: string) => {
@@ -55,17 +60,10 @@ export default function Settings() {
 
       <div className="settings-layout-grid">
         <aside className="settings-tabs">
-          {[
-            { label: 'Profile', icon: User, active: true },
-            { label: 'Notifications', icon: Bell },
-            { label: 'Security', icon: Shield },
-            { label: 'Billing', icon: CreditCard },
-          ].map((item) => (
-            <button key={item.label} type="button" className={item.active ? 'is-active' : ''}>
-              <item.icon className="h-4 w-4" aria-hidden="true" />
-              {item.label}
-            </button>
-          ))}
+          <button type="button" className="is-active">
+            <User className="h-4 w-4" aria-hidden="true" />
+            Profile
+          </button>
         </aside>
 
         <section className="settings-content-stack">
@@ -76,17 +74,10 @@ export default function Settings() {
                   <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-primary text-3xl font-black text-white shadow-md">
                     {(formData.firstName || formData.email || 'A').charAt(0).toUpperCase()}
                   </div>
-                  <button type="button" className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white shadow-lg">
-                    <Camera className="h-4 w-4" aria-hidden="true" />
-                  </button>
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-2xl font-bold text-foreground">Profile Information</h2>
-                  <p className="mt-1 text-sm font-medium text-muted-foreground">Update your photo and personal details.</p>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Button type="button" size="sm">Upload New</Button>
-                    <Button type="button" variant="outline" size="sm">Remove</Button>
-                  </div>
+                  <p className="mt-1 text-sm font-medium text-muted-foreground">Update the account details used across your job tracker.</p>
                 </div>
               </div>
             </CardContent>
@@ -117,28 +108,6 @@ export default function Settings() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Professional Links</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ProfessionalLink icon={LinkIcon} label="LinkedIn Profile" value="linkedin.com/in/your-profile" />
-              <ProfessionalLink icon={Globe} label="Portfolio Website" value="yourportfolio.com" />
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 text-slate-400">
-                  <FileText className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <label className="mb-1 block text-xs font-bold text-muted-foreground">Resume / CV</label>
-                  <div className="flex gap-2">
-                    <span className="flex min-h-10 flex-1 items-center rounded-xl bg-teal-50 px-4 text-sm font-bold text-primary">resume_latest.pdf</span>
-                    <Button type="button" variant="ghost">Update</Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           <div className="flex justify-end gap-3 pb-12">
             <Button type="button" variant="ghost">Cancel</Button>
             <Button onClick={handleSave} loading={updateSettingsMutation.isPending}>Save Changes</Button>
@@ -146,19 +115,5 @@ export default function Settings() {
         </section>
       </div>
     </>
-  );
-}
-
-function ProfessionalLink({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-4">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 text-slate-400">
-        <Icon className="h-5 w-5" aria-hidden="true" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <label className="mb-1 block text-xs font-bold text-muted-foreground">{label}</label>
-        <Input defaultValue={value} />
-      </div>
-    </div>
   );
 }

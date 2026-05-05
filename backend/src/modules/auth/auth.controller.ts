@@ -81,6 +81,29 @@ export class AuthController {
     };
   }
 
+  @Post('refresh')
+  @UseGuards(JwtAuthGuard)
+  async refresh(
+    @Req() request: AuthenticatedRequest,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.refresh({
+      id: request.user.id,
+      email: request.user.email || '',
+      firstName: request.user.firstName ?? null,
+      lastName: request.user.lastName ?? null,
+      createdAt: request.user.createdAt || new Date(),
+      updatedAt: request.user.updatedAt || new Date(),
+    });
+
+    response.cookie('access_token', result.access_token, getAuthCookieOptions());
+
+    return {
+      data: result,
+      message: 'success',
+    };
+  }
+
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   async logout(@Res({ passthrough: true }) response: Response) {

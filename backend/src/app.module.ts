@@ -9,11 +9,15 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { TagsModule } from './modules/tags/tags.module';
 import { HealthModule } from './common/health/health.module';
 import { RateLimitMiddleware } from './common/middleware/rate-limit.middleware';
+import { RequestLoggingMiddleware } from './common/middleware/request-logging.middleware';
+import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware';
+import { validateEnvironment } from './config/env.validation';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validate: validateEnvironment,
     }),
     PrismaModule,
     AuthModule,
@@ -27,6 +31,8 @@ import { RateLimitMiddleware } from './common/middleware/rate-limit.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RateLimitMiddleware).forRoutes('*');
+    consumer
+      .apply(SecurityHeadersMiddleware, RequestLoggingMiddleware, RateLimitMiddleware)
+      .forRoutes('*');
   }
 }

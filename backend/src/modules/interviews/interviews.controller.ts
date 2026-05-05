@@ -6,6 +6,7 @@ import {
   Patch, 
   Param, 
   Delete,
+  Query,
   UseGuards,
   Request
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { CreateInterviewDto } from './dto/create-interview.dto';
 import { UpdateInterviewDto } from './dto/update-interview.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AuthenticatedRequest } from '../../common/types/authenticated-request';
+import { getPaginationOptions } from '../../common/pagination';
 
 @Controller('interviews')
 @UseGuards(JwtAuthGuard)
@@ -29,9 +31,15 @@ export class InterviewsController {
   }
 
   @Get()
-  async findAll(@Request() req: AuthenticatedRequest) {
+  async findAll(
+    @Request() req: AuthenticatedRequest,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pagination = getPaginationOptions(page, limit, 25);
+
     return {
-      data: await this.interviewsService.findAll(req.user.id),
+      data: await this.interviewsService.findAll(req.user.id, pagination),
       message: 'success',
     };
   }
@@ -65,9 +73,16 @@ export class InterviewsController {
   }
 
   @Get('application/:applicationId')
-  async findByApplication(@Param('applicationId') applicationId: string, @Request() req: AuthenticatedRequest) {
+  async findByApplication(
+    @Param('applicationId') applicationId: string,
+    @Request() req: AuthenticatedRequest,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pagination = getPaginationOptions(page, limit, 25);
+
     return {
-      data: await this.interviewsService.findByApplication(applicationId, req.user.id),
+      data: await this.interviewsService.findByApplication(applicationId, req.user.id, pagination),
       message: 'success',
     };
   }
