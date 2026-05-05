@@ -32,11 +32,11 @@ export function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={onClose} />
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+      <div className="fixed inset-0 bg-slate-950/55 backdrop-blur-sm" onClick={onClose} />
+      <div className="modal-panel mx-4 max-w-md" role="dialog" aria-modal="true">
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-          <p className="text-gray-600 mb-6">{description}</p>
+          <h3 className="mb-2 text-xl font-bold text-foreground">{title}</h3>
+          <p className="mb-6 text-sm font-medium leading-6 text-muted-foreground">{description}</p>
           
           <div className="flex justify-end gap-3">
             <Button 
@@ -49,7 +49,7 @@ export function ConfirmDialog({
             <Button 
               type="button"
               onClick={handleConfirm}
-              className={variant === 'danger' ? 'bg-red-600 hover:bg-red-700' : 'bg-teal-600 hover:bg-teal-700'}
+              variant={variant === 'danger' ? 'destructive' : 'default'}
             >
               {confirmText}
             </Button>

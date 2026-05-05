@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateInterviewDto } from './dto/create-interview.dto';
 import { UpdateInterviewDto } from './dto/update-interview.dto';
@@ -7,10 +7,23 @@ import { UpdateInterviewDto } from './dto/update-interview.dto';
 export class InterviewsService {
   constructor(private prisma: PrismaService) {}
 
+  private async verifyApplicationOwnership(applicationId: string, userId: string) {
+    const application = await this.prisma.application.findFirst({
+      where: { id: applicationId, userId },
+      select: { id: true },
+    });
+
+    if (!application) {
+      throw new NotFoundException('Application not found');
+    }
+  }
+
   async create(createInterviewDto: CreateInterviewDto, userId: string) {
     if (!createInterviewDto.applicationId) {
-      throw new Error('Application is required');
+      throw new BadRequestException('Application is required');
     }
+
+    await this.verifyApplicationOwnership(createInterviewDto.applicationId, userId);
 
     return this.prisma.interview.create({
       data: {
@@ -68,7 +81,7 @@ export class InterviewsService {
     });
 
     if (!interview) {
-      throw new Error('Interview not found');
+      throw new NotFoundException('Interview not found');
     }
 
     return interview;
@@ -113,14 +126,7 @@ export class InterviewsService {
   }
 
   async findByApplication(applicationId: string, userId: string) {
-    // First verify the user owns the application
-    const application = await this.prisma.application.findFirst({
-      where: { id: applicationId, userId },
-    });
-
-    if (!application) {
-      throw new Error('Application not found');
-    }
+    await this.verifyApplicationOwnership(applicationId, userId);
 
     return this.findAll(userId, applicationId);
   }

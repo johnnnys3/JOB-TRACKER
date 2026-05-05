@@ -4,48 +4,48 @@ interface StatCardProps {
   title: string;
   value: number;
   icon: LucideIcon;
-  color: 'blue' | 'yellow' | 'green' | 'red';
+  color: 'blue' | 'amber' | 'green' | 'red';
+  helperText?: string;
+  suffix?: string;
 }
 
 const colorConfig = {
   blue: {
-    bg: 'bg-blue-50',
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
-    textColor: 'text-blue-900'
+    iconBg: 'bg-teal-50',
+    iconColor: 'text-teal-700',
+    accent: 'bg-teal-500',
   },
-  yellow: {
-    bg: 'bg-yellow-50',
-    iconBg: 'bg-yellow-100',
-    iconColor: 'text-yellow-600',
-    textColor: 'text-yellow-900'
+  amber: {
+    iconBg: 'bg-amber-50',
+    iconColor: 'text-amber-700',
+    accent: 'bg-amber-500',
   },
   green: {
-    bg: 'bg-green-50',
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600',
-    textColor: 'text-green-900'
+    iconBg: 'bg-emerald-50',
+    iconColor: 'text-emerald-600',
+    accent: 'bg-emerald-500',
   },
   red: {
-    bg: 'bg-red-50',
-    iconBg: 'bg-red-100',
+    iconBg: 'bg-red-50',
     iconColor: 'text-red-600',
-    textColor: 'text-red-900'
+    accent: 'bg-red-500',
   }
 };
 
-export function StatCard({ title, value, icon: Icon, color }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, color, helperText, suffix = '' }: StatCardProps) {
   const config = colorConfig[color];
   
   return (
-    <div className={`${config.bg} rounded-lg p-6 border border-gray-200`}>
+    <div className="group relative overflow-hidden rounded-3xl border border-white/55 bg-white/70 p-5 shadow-[0_18px_48px_rgba(6,95,84,0.08)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-primary/25 hover:bg-white/90 hover:shadow-[0_22px_58px_rgba(6,95,84,0.12)]">
+      <div className={`absolute inset-x-0 top-0 h-1 ${config.accent}`} />
       <div className="flex items-center justify-between">
         <div>
-          <p className={`text-sm font-medium ${config.textColor}`}>{title}</p>
-          <p className={`text-2xl font-bold ${config.textColor} mt-1`}>{value}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">{title}</p>
+          <p className="mt-2 text-3xl font-extrabold tracking-tight text-foreground">{value}{suffix}</p>
+          {helperText ? <p className="mt-1 text-xs font-medium text-muted-foreground">{helperText}</p> : null}
         </div>
-        <div className={`${config.iconBg} rounded-lg p-3`}>
-          <Icon className={`h-6 w-6 ${config.iconColor}`} />
+        <div className={`${config.iconBg} rounded-2xl p-3 shadow-sm`}>
+          <Icon className={`h-5 w-5 ${config.iconColor}`} aria-hidden="true" />
         </div>
       </div>
     </div>

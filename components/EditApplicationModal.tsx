@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Application, ApplicationStatus, statusOptions, UpdateApplicationDto } from '@/types';
 import {
   Select,
@@ -65,20 +66,20 @@ export function EditApplicationModal({ isOpen, onClose, application, onSubmit }:
 
   return (
     <div className="fixed inset-0 z-50">
-      <div className="fixed inset-0 bg-gray-600/75" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-950/55 backdrop-blur-sm" onClick={onClose} />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between p-6 border-b">
-            <h2 className="text-xl font-semibold text-gray-900">Edit Application</h2>
+        <div className="modal-panel max-h-[90vh] max-w-2xl overflow-y-auto" role="dialog" aria-modal="true">
+          <div className="modal-header">
+            <h2>Edit application</h2>
             <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close edit application modal">
               <X className="h-4 w-4" />
             </Button>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                <label className="form-label">Company</label>
                 <Input
                   value={formData.company}
                   onChange={(e) => handleChange('company', e.target.value)}
@@ -88,7 +89,7 @@ export function EditApplicationModal({ isOpen, onClose, application, onSubmit }:
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                <label className="form-label">Job title</label>
                 <Input
                   value={formData.jobTitle}
                   onChange={(e) => handleChange('jobTitle', e.target.value)}
@@ -98,7 +99,7 @@ export function EditApplicationModal({ isOpen, onClose, application, onSubmit }:
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <label className="form-label">Location</label>
                 <Input
                   value={formData.location}
                   onChange={(e) => handleChange('location', e.target.value)}
@@ -107,7 +108,7 @@ export function EditApplicationModal({ isOpen, onClose, application, onSubmit }:
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Salary Range</label>
+                <label className="form-label">Salary range</label>
                 <Input
                   value={formData.salaryRange}
                   onChange={(e) => handleChange('salaryRange', e.target.value)}
@@ -116,7 +117,7 @@ export function EditApplicationModal({ isOpen, onClose, application, onSubmit }:
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Job Link</label>
+                <label className="form-label">Job link</label>
                 <Input
                   value={formData.jobLink}
                   onChange={(e) => handleChange('jobLink', e.target.value)}
@@ -125,7 +126,7 @@ export function EditApplicationModal({ isOpen, onClose, application, onSubmit }:
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Application Date</label>
+                <label className="form-label">Application date</label>
                 <Input
                   type="date"
                   value={formData.applicationDate}
@@ -136,7 +137,7 @@ export function EditApplicationModal({ isOpen, onClose, application, onSubmit }:
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="form-label">Status</label>
               <Select value={formData.status} onValueChange={(value: ApplicationStatus) => handleChange('status', value)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -152,9 +153,8 @@ export function EditApplicationModal({ isOpen, onClose, application, onSubmit }:
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+              <label className="form-label">Description</label>
+              <Textarea
                 rows={4}
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
@@ -163,9 +163,8 @@ export function EditApplicationModal({ isOpen, onClose, application, onSubmit }:
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-              <textarea
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+              <label className="form-label">Notes</label>
+              <Textarea
                 rows={3}
                 value={formData.notes}
                 onChange={(e) => handleChange('notes', e.target.value)}
@@ -173,12 +172,12 @@ export function EditApplicationModal({ isOpen, onClose, application, onSubmit }:
               />
             </div>
 
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="modal-footer -mx-6 -mb-6 mt-6">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit" className="bg-teal-600 hover:bg-teal-700">
-                Save Changes
+              <Button type="submit">
+                Save changes
               </Button>
             </div>
           </form>

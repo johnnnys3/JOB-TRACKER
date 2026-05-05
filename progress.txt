@@ -2,11 +2,12 @@
 
 ## Current Status
 
-* Overall status: Phase 1 critical, Phase 2 major, and requested Phase 3 cleanup/polish pass complete; remaining work is broader optional test coverage.
+* Overall status: Phase 1 critical, Phase 2 major, requested Phase 3 cleanup/polish, the May 3 PRD security/non-functional pass, and the May 3 frontend route/design-system pass are complete; remaining work is broader optional test coverage, e2e smoke testing, and production environment review.
 * Backend status: Build passing after schema-alignment fixes.
 * Frontend status: Type-check and production build passing.
 * Database status: Prisma schema and migration history are aligned with the PRD/current schema; local database migration status is up to date.
 * Authentication status: Login now validates email/password before JWT signing; broader auth/session behavior still needs endpoint-level verification.
+* PRD comparison status: MVP feature coverage is implemented for auth, application CRUD, status tracking, interview tracking, dashboard overview, filtering/search, analytics summary, and scoped settings/profile. Current known gaps are mostly release-hardening tasks: broader service/controller tests, e2e browser smoke tests, deployment environment validation, and optional frontend error-boundary/toast polish.
 
 ## Completed Fixes
 
@@ -319,6 +320,64 @@
     * Passed: `npm.cmd test -- auth.service.spec.ts --runInBand` from `backend/`.
     * Passed: `npm.cmd run build` from project root when run outside the sandbox.
 
+* [2026-05-03 20:37 +01:00] Fix: Closed PRD data-isolation gap in standalone interview creation.
+
+  * Files changed:
+    * backend/src/modules/interviews/interviews.service.ts
+    * backend/src/modules/interviews/interviews.service.spec.ts
+  * What changed:
+    * Direct `POST /interviews` creation now verifies the authenticated user owns the referenced application before inserting an interview.
+    * Missing application ids now return `BadRequestException`, and missing applications/interviews now return `NotFoundException` instead of plain errors.
+    * Added focused tests for missing application id, cross-user application rejection, successful ownership-verified creation, missing interview errors, and application-scoped listing.
+  * Verification result:
+    * Passed: `npm.cmd test -- interviews.service.spec.ts --runInBand` from `backend/`.
+    * Passed: `npm.cmd test -- --runInBand` from `backend/`.
+    * Passed: `npm.cmd run build` from `backend/`.
+
+* [2026-05-03 20:37 +01:00] Fix: Added PRD-required backend rate limiting.
+
+  * Files changed:
+    * backend/src/app.module.ts
+    * backend/src/common/middleware/rate-limit.middleware.ts
+    * backend/src/common/middleware/rate-limit.middleware.spec.ts
+  * What changed:
+    * Added global per-process in-memory request limiting with a default of 100 requests per 60 seconds.
+    * Added `RATE_LIMIT_MAX` and `RATE_LIMIT_WINDOW_MS` environment overrides for non-production testing/tuning.
+    * Added standard `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` headers.
+    * Added tests for allowed requests, 429 rejection after the limit, window reset, and forwarded-client isolation.
+  * Verification result:
+    * Passed: `npm.cmd test -- rate-limit.middleware.spec.ts --runInBand` from `backend/`.
+    * Passed: `npm.cmd test -- --runInBand` from `backend/`.
+    * Passed: `npm.cmd run build` from `backend/`.
+    * Passed: `npm.cmd run build` from project root.
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root after rerunning it separately from `next build`.
+
+* [2026-05-03 21:14 +01:00] Feature: Completed frontend route and UI consistency pass.
+
+  * Files changed:
+    * app/not-found.tsx
+    * app/dashboard/applications/page.tsx
+    * app/dashboard/applications/[id]/page.tsx
+    * app/dashboard/analytics/page.tsx
+    * app/dashboard/settings/page.tsx
+    * app/(auth)/*
+    * app/(dashboard)/*
+    * components/*
+    * components/ui/*
+    * types/index.ts
+  * What changed:
+    * Fixed broken dashboard links by using the real route group URLs (`/applications`, `/analytics`, `/settings`) and added legacy redirects from `/dashboard/applications`, `/dashboard/analytics`, and `/dashboard/settings`.
+    * Added a polished custom not-found page for stale or invalid links.
+    * Replaced the mismatched landing page content with Job Tracker-specific positioning, CTAs, features, workflow, and insights sections.
+    * Added shared UI primitives for cards, textareas, page headers, auth shell, alerts, loading states, empty states, and app branding.
+    * Refactored dashboard, applications, application detail, analytics, settings, auth pages, modals, tags, status badges, and the app shell to use consistent colors, typography, spacing, buttons, cards, and responsive layouts.
+  * Verification result:
+    * Passed: `node_modules\.bin\tsc.cmd --noEmit` from project root.
+    * Passed: `npm.cmd run build` from project root.
+    * Passed: `npm.cmd test -- --runInBand` from `backend/`.
+    * Passed: `npm.cmd run build` from `backend/`.
+    * Local dev server started at `http://localhost:3004` because ports 3000-3003 were already in use.
+
 ## Active Issues
 
 ### Critical
@@ -338,6 +397,8 @@
 * [x] Issue: Analytics frontend-backend contract mismatch.
 * [x] Issue: Deployment cookie/CORS issues.
 * [x] Issue: Inconsistent PRD response format.
+* [x] Issue: Missing PRD rate limiting.
+* [x] Issue: Standalone interview creation allowed cross-user application references.
 
 ### Minor
 
