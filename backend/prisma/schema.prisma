@@ -19,6 +19,7 @@ model User {
   updatedAt    DateTime      @updatedAt
   applications Application[]
   interviews   Interview[]
+  tags         Tag[]
 
   @@index([email])
   @@index([passwordResetTokenHash])
@@ -71,12 +72,17 @@ model Interview {
 
 model Tag {
   id          String @id @default(cuid())
-  name        String @unique
+  name        String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  userId      String
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Relations
   applications ApplicationTag[]
+
+  @@unique([userId, name])
+  @@index([userId])
 }
 
 // Junction table for Application-Tag many-to-many relationship

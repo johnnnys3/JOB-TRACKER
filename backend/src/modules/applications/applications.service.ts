@@ -4,6 +4,7 @@ import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationDto } from './dto/update-application.dto';
 import { CreateInterviewDto } from '../interviews/dto/create-interview.dto';
 import { Prisma } from '@prisma/client';
+import { PaginationOptions, toPaginatedResult } from '../../common/pagination';
 
 const applicationInclude = {
   tags: {
@@ -50,8 +51,7 @@ export class ApplicationsService {
     return this.formatApplication(application);
   }
 
-  async findAll(userId: string, page = 1, limit = 10, filters: ApplicationFilters = {}) {
-    const skip = (page - 1) * limit;
+  async findAll(userId: string, pagination: PaginationOptions, filters: ApplicationFilters = {}) {
     const where: Prisma.ApplicationWhereInput = { userId };
 
     if (filters.status) {
@@ -83,8 +83,8 @@ export class ApplicationsService {
     const [applications, total] = await Promise.all([
       this.prisma.application.findMany({
         where,
-        skip,
-        take: limit,
+        skip: pagination.skip,
+        take: pagination.limit,
         include: applicationInclude,
         orderBy: { applicationDate: 'desc' },
       }),
@@ -93,13 +93,12 @@ export class ApplicationsService {
       }),
     ]);
 
-    return {
-      data: applications.map(application => this.formatApplication(application)),
+    return toPaginatedResult(
+      applications.map(application => this.formatApplication(application)),
       total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+      pagination.page,
+      pagination.limit,
+    );
   }
 
   async findOne(id: string, userId: string) {
@@ -160,25 +159,32 @@ export class ApplicationsService {
     });
   }
 
-  async getInterviews(applicationId: string, userId: string) {
+  async getInterviews(applicationId: string, userId: string, pagination: PaginationOptions) {
     // Verify user owns application
     await this.findOne(applicationId, userId);
 
-    return this.prisma.interview.findMany({
-      where: {
-        applicationId,
-      },
-      include: {
-        application: true,
-      },
-      orderBy: {
-        date: 'asc',
-      },
-    });
+    const where = { applicationId, userId };
+    const [interviews, total] = await Promise.all([
+      this.prisma.interview.findMany({
+        where,
+        skip: pagination.skip,
+        take: pagination.limit,
+        include: {
+          application: true,
+        },
+        orderBy: {
+          date: 'asc',
+        },
+      }),
+      this.prisma.interview.count({ where }),
+    ]);
+
+    return toPaginatedResult(interviews, total, pagination.page, pagination.limit);
   }
 
   async addTag(applicationId: string, tagId: string, userId: string) {
     await this.findOne(applicationId, userId);
+    await this.verifyTagOwnership(tagId, userId);
 
     await this.prisma.applicationTag.upsert({
       where: {
@@ -199,6 +205,7 @@ export class ApplicationsService {
 
   async removeTag(applicationId: string, tagId: string, userId: string) {
     await this.findOne(applicationId, userId);
+    await this.verifyTagOwnership(tagId, userId);
 
     await this.prisma.applicationTag.delete({
       where: {
@@ -210,5 +217,16 @@ export class ApplicationsService {
     });
 
     return this.findOne(applicationId, userId);
+  }
+
+  private async verifyTagOwnership(tagId: string, userId: string) {
+    const tag = await this.prisma.tag.findFirst({
+      where: { id: tagId, userId },
+      select: { id: true },
+    });
+
+    if (!tag) {
+      throw new NotFoundException('Tag not found');
+    }
   }
 }

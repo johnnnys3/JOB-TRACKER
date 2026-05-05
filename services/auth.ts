@@ -14,7 +14,7 @@ export interface RegisterDto {
 }
 
 export interface ForgotPasswordResponse {
-  resetUrl: string | null;
+  resetLinkSent: boolean;
 }
 
 export interface AuthResponse {

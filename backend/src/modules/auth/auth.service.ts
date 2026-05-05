@@ -1,8 +1,10 @@
 import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
+import * as nodemailer from 'nodemailer';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -22,6 +24,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<AuthenticatedUser | null> {
@@ -40,6 +43,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    return this.createAuthResponse(user);
+  }
+
+  async refresh(user: AuthenticatedUser) {
     return this.createAuthResponse(user);
   }
 
@@ -65,7 +72,7 @@ export class AuthService {
       throw new ConflictException('An account with this email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    const hashedPassword = await bcrypt.hash(userData.password, this.getBcryptRounds());
     const user = await this.usersService.create({
       ...userData,
       password: hashedPassword,
@@ -80,7 +87,7 @@ export class AuthService {
 
     if (!user) {
       return {
-        resetUrl: null,
+        resetLinkSent: true,
       };
     }
 
@@ -90,10 +97,12 @@ export class AuthService {
 
     await this.usersService.setPasswordResetToken(user.id, tokenHash, expiresAt);
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
+    await this.sendPasswordResetEmail(user.email, resetUrl);
 
     return {
-      resetUrl: `${frontendUrl}/reset-password?token=${token}`,
+      resetLinkSent: true,
     };
   }
 
@@ -105,7 +114,7 @@ export class AuthService {
       throw new BadRequestException('Password reset link is invalid or has expired');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, this.getBcryptRounds());
     await this.usersService.updatePassword(user.id, hashedPassword);
 
     return {
@@ -115,5 +124,46 @@ export class AuthService {
 
   private hashResetToken(token: string) {
     return createHash('sha256').update(token).digest('hex');
+  }
+
+  private getBcryptRounds() {
+    const parsed = Number(this.configService.get<string>('BCRYPT_ROUNDS'));
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : 12;
+  }
+
+  private async sendPasswordResetEmail(email: string, resetUrl: string) {
+    const host = this.configService.get<string>('SMTP_HOST');
+    const port = Number(this.configService.get<string>('SMTP_PORT') || 587);
+    const user = this.configService.get<string>('SMTP_USER');
+    const pass = this.configService.get<string>('SMTP_PASS');
+    const from = this.configService.get<string>('MAIL_FROM');
+    const secure = this.configService.get<string>('SMTP_SECURE') === 'true';
+
+    if (!host || !user || !pass || !from) {
+      if (this.configService.get<string>('NODE_ENV') !== 'production') {
+        console.warn(`Password reset link for ${email}: ${resetUrl}`);
+        return;
+      }
+
+      throw new Error('SMTP configuration is incomplete');
+    }
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: {
+        user,
+        pass,
+      },
+    });
+
+    await transporter.sendMail({
+      from,
+      to: email,
+      subject: 'Reset your Job Tracker password',
+      text: `Use this link to reset your password: ${resetUrl}\n\nThis link expires in 1 hour.`,
+      html: `<p>Use this link to reset your password:</p><p><a href="${resetUrl}">Reset password</a></p><p>This link expires in 1 hour.</p>`,
+    });
   }
 }

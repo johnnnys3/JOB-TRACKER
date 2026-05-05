@@ -1,10 +1,10 @@
 import { api } from './api';
-import { ApiResponse, CreateInterviewDto, Interview, UpdateInterviewDto } from '@/types';
+import { ApiResponse, CreateInterviewDto, Interview, PaginatedResponse, UpdateInterviewDto } from '@/types';
 
 export const interviewsService = {
   getByApplicationId: async (applicationId: string): Promise<Interview[]> => {
-    const response = await api.get<ApiResponse<Interview[]>>(`/applications/${applicationId}/interviews`);
-    return response.data;
+    const response = await api.get<ApiResponse<PaginatedResponse<Interview>>>(`/applications/${applicationId}/interviews?limit=100`);
+    return response.data.data;
   },
 
   create: async (applicationId: string, data: CreateInterviewDto): Promise<Interview> => {

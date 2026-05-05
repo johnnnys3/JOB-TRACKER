@@ -12,20 +12,17 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [resetUrl, setResetUrl] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage('');
-    setResetUrl(null);
     setError('');
 
     try {
       const response = await authService.forgotPassword(email);
       setMessage(response.message);
-      setResetUrl(response.data.resetUrl);
     } catch {
       setError('Unable to create a password reset link. Please try again.');
     } finally {
@@ -54,15 +51,6 @@ export default function ForgotPasswordPage() {
 
           {message && (
             <AlertMessage variant="success">{message}</AlertMessage>
-          )}
-
-          {resetUrl && (
-            <div className="break-words rounded-2xl border border-teal-200 bg-teal-50 p-3 text-sm">
-              <div className="mb-1 font-semibold text-foreground">Development reset link</div>
-              <Link href={resetUrl} className="font-medium text-primary hover:underline">
-                {resetUrl}
-              </Link>
-            </div>
           )}
 
           {error && (

@@ -5,6 +5,14 @@ export interface ApiResponse<T> {
   message: string;
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export const statusOptions: { value: ApplicationStatus; label: string }[] = [
   { value: 'WISHLIST', label: 'Wishlist' },
   { value: 'APPLIED', label: 'Applied' },

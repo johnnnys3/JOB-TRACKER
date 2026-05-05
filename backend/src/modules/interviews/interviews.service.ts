@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateInterviewDto } from './dto/create-interview.dto';
 import { UpdateInterviewDto } from './dto/update-interview.dto';
+import { PaginationOptions, toPaginatedResult } from '../../common/pagination';
 
 @Injectable()
 export class InterviewsService {
@@ -45,25 +46,32 @@ export class InterviewsService {
     });
   }
 
-  async findAll(userId: string, applicationId?: string) {
+  async findAll(userId: string, pagination: PaginationOptions, applicationId?: string) {
     const where = {
       userId,
       ...(applicationId && { applicationId }),
     };
 
-    return this.prisma.interview.findMany({
-      where,
-      include: {
-        application: {
-          select: {
-            id: true,
-            company: true,
-            jobTitle: true,
+    const [interviews, total] = await Promise.all([
+      this.prisma.interview.findMany({
+        where,
+        skip: pagination.skip,
+        take: pagination.limit,
+        include: {
+          application: {
+            select: {
+              id: true,
+              company: true,
+              jobTitle: true,
+            },
           },
         },
-      },
-      orderBy: { date: 'asc' },
-    });
+        orderBy: { date: 'asc' },
+      }),
+      this.prisma.interview.count({ where }),
+    ]);
+
+    return toPaginatedResult(interviews, total, pagination.page, pagination.limit);
   }
 
   async findOne(id: string, userId: string) {
@@ -125,9 +133,9 @@ export class InterviewsService {
     });
   }
 
-  async findByApplication(applicationId: string, userId: string) {
+  async findByApplication(applicationId: string, userId: string, pagination: PaginationOptions) {
     await this.verifyApplicationOwnership(applicationId, userId);
 
-    return this.findAll(userId, applicationId);
+    return this.findAll(userId, pagination, applicationId);
   }
 }

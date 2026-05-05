@@ -1,7 +1,9 @@
 import { IsString, IsOptional, IsDateString } from 'class-validator';
+import { IsTrimmedNotEmpty } from '../../../common/decorators/is-trimmed-not-empty.decorator';
 
 export class CreateInterviewDto {
   @IsString()
+  @IsTrimmedNotEmpty()
   stage!: string;
 
   @IsDateString()
@@ -9,9 +11,11 @@ export class CreateInterviewDto {
 
   @IsOptional()
   @IsString()
+  @IsTrimmedNotEmpty()
   notes?: string;
 
   @IsOptional()
   @IsString()
+  @IsTrimmedNotEmpty()
   applicationId?: string;
 }

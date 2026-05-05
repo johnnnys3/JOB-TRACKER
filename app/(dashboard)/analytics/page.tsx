@@ -1,6 +1,6 @@
 'use client'
 
-import { BarChart3, Calendar, Clock, MessageSquare, Send, Star, type LucideIcon } from 'lucide-react';
+import { BarChart3, BriefcaseBusiness, Calendar, CheckCircle, MessageSquare, Send, type LucideIcon } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { PageHeader } from '@/components/PageHeader';
 import { PageLoadingState } from '@/components/LoadingState';
@@ -67,10 +67,10 @@ export default function Analytics() {
       ) : null}
 
       <div className="analytics-shell-grid">
-        <InsightMetric title="Total Apps" value={analytics.totalApplications} detail="+12% vs last mo" icon={Send} tone="teal" />
+        <InsightMetric title="Total Apps" value={analytics.totalApplications} detail="Tracked roles" icon={Send} tone="teal" />
         <InsightMetric title="Interviews" value={interviews} detail={`${Math.round(analytics.interviewRate * 100)}% conversion`} icon={MessageSquare} tone="blue" />
-        <InsightMetric title="Avg Response" value="5.2d" detail="-2 days vs avg" icon={Clock} tone="amber" />
-        <InsightMetric title="Profile Score" value="94" detail="Top 5% user" icon={Star} tone="purple" />
+        <InsightMetric title="Active Apps" value={analytics.activeApplications} detail="Applied or interviewing" icon={BriefcaseBusiness} tone="amber" />
+        <InsightMetric title="Offers" value={offers} detail={`${Math.round(analytics.offerRate * 100)}% conversion`} icon={CheckCircle} tone="purple" />
 
         <Card className="analytics-velocity-card">
           <CardHeader className="flex flex-row items-center justify-between gap-4">
@@ -82,15 +82,6 @@ export default function Analytics() {
           </CardHeader>
           <CardContent>
             <VelocityChart data={trendData} />
-          </CardContent>
-        </Card>
-
-        <Card className="analytics-source-card">
-          <CardHeader>
-            <CardTitle>Top Sources</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SourceDonut />
           </CardContent>
         </Card>
 
@@ -111,14 +102,6 @@ export default function Analytics() {
           </CardContent>
         </Card>
 
-        <Card className="analytics-skill-card">
-          <CardHeader>
-            <CardTitle>Skill Proficiency</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SkillPanel />
-          </CardContent>
-        </Card>
       </div>
     </>
   );
@@ -169,37 +152,6 @@ function VelocityChart({ data }: { data: { date: string; count: number }[] }) {
   );
 }
 
-function SourceDonut() {
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative mb-8 h-48 w-48">
-        <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
-          <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e7eeff" strokeWidth="4" />
-          <circle cx="18" cy="18" r="15.9" fill="none" stroke="#00685f" strokeDasharray="45 55" strokeWidth="4" />
-          <circle cx="18" cy="18" r="15.9" fill="none" stroke="#6bd8cb" strokeDasharray="25 75" strokeDashoffset="-45" strokeWidth="4" />
-          <circle cx="18" cy="18" r="15.9" fill="none" stroke="#d8e5e2" strokeDasharray="30 70" strokeDashoffset="-70" strokeWidth="4" />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-primary">LinkedIn</span>
-          <span className="text-xs font-semibold text-muted-foreground">45% total</span>
-        </div>
-      </div>
-      <div className="w-full space-y-3">
-        {[
-          ['LinkedIn', '45%', 'bg-primary'],
-          ['Indeed', '25%', 'bg-teal-300'],
-          ['Referrals', '30%', 'bg-secondary/40'],
-        ].map(([label, value, dot]) => (
-          <div key={label} className="flex items-center justify-between text-sm font-semibold">
-            <span className="flex items-center"><span className={`mr-2 h-3 w-3 rounded-full ${dot}`} />{label}</span>
-            <span>{value}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function FunnelRows({ rows }: { rows: [string, number, number][] }) {
   return (
     <div className="space-y-4">
@@ -216,43 +168,6 @@ function FunnelRows({ rows }: { rows: [string, number, number][] }) {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-function SkillPanel() {
-  return (
-    <div className="grid gap-8 md:grid-cols-2">
-      <div className="space-y-5">
-        {[
-          ['Technical Knowledge', 88],
-          ['Communication', 94],
-          ['Problem Solving', 76],
-        ].map(([label, value]) => (
-          <div key={label as string}>
-            <div className="mb-2 flex justify-between">
-              <span className="text-xs font-bold uppercase text-slate-400">{label}</span>
-              <span className="text-xs font-bold text-primary">{value}%</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-teal-50">
-              <div className="h-full rounded-full bg-primary" style={{ width: `${value}%` }} />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="relative flex min-h-48 items-center justify-center">
-        <div className="flex h-40 w-40 items-center justify-center rounded-full border-2 border-teal-50">
-          <div className="flex h-28 w-28 items-center justify-center rounded-full border-2 border-teal-100">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-teal-200">
-              <div className="h-4 w-4 rounded-full bg-primary shadow-lg shadow-teal-600/40" />
-            </div>
-          </div>
-        </div>
-        <span className="absolute top-2 text-[10px] font-black text-primary">CODE</span>
-        <span className="absolute bottom-2 text-[10px] font-black text-primary">DESIGN</span>
-        <span className="absolute left-3 text-[10px] font-black text-primary">UX</span>
-        <span className="absolute right-3 text-[10px] font-black text-primary">DATA</span>
-      </div>
     </div>
   );
 }

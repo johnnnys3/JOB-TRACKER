@@ -1,6 +1,7 @@
 'use client'
 
 import { use, useState } from "react";
+import dynamic from "next/dynamic";
 import { ArrowLeft, Calendar, CheckCircle2, Edit, ExternalLink, FileText, MapPin, Plus, Trash2, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,10 +10,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ApplicationStatus, Interview, UpdateApplicationDto, CreateInterviewDto, UpdateInterviewDto } from "@/types";
 import { useApplication, useUpdateApplication, useDeleteApplication } from "@/hooks/useApplications";
 import { useCreateInterview, useUpdateInterview, useDeleteInterview } from "@/hooks/useInterviews";
-import { EditApplicationModal } from "@/components/EditApplicationModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { InterviewModal } from "@/components/InterviewModal";
-import { TagManager } from "@/components/TagManager";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { PageHeader } from "@/components/PageHeader";
 import { PageLoadingState } from "@/components/LoadingState";
@@ -20,6 +18,20 @@ import { AlertMessage } from "@/components/AlertMessage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/EmptyState";
 import { ThreePaneLayout } from "@/components/WorkspaceLayouts";
+import { useToast } from "@/contexts/ToastContext";
+
+const EditApplicationModal = dynamic(
+  () => import("@/components/EditApplicationModal").then(mod => mod.EditApplicationModal),
+  { ssr: false },
+);
+const InterviewModal = dynamic(
+  () => import("@/components/InterviewModal").then(mod => mod.InterviewModal),
+  { ssr: false },
+);
+const TagManager = dynamic(
+  () => import("@/components/TagManager").then(mod => mod.TagManager),
+  { ssr: false },
+);
 
 export default function ApplicationDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -36,18 +48,29 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
   const updateInterviewMutation = useUpdateInterview();
   const deleteInterviewMutation = useDeleteInterview();
   const router = useRouter();
+  const { notify } = useToast();
 
   const handleDeleteApplication = () => {
     if (application) {
       deleteApplicationMutation.mutate(application.id, {
-        onSuccess: () => router.push('/applications'),
+        onSuccess: () => {
+          notify('Application deleted', 'success');
+          router.push('/applications');
+        },
+        onError: () => notify('Application could not be deleted', 'error'),
       });
     }
   };
 
   const handleUpdateApplication = (data: UpdateApplicationDto) => {
     if (application) {
-      updateApplicationMutation.mutate({ id: application.id, data });
+      updateApplicationMutation.mutate({ id: application.id, data }, {
+        onSuccess: () => {
+          setIsEditModalOpen(false);
+          notify('Application updated', 'success');
+        },
+        onError: () => notify('Application could not be updated', 'error'),
+      });
     }
   };
 
@@ -58,29 +81,44 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
 
   const handleCreateInterview = (data: CreateInterviewDto) => {
     if (application) {
-      createInterviewMutation.mutate({ applicationId: application.id, data });
-      setIsInterviewModalOpen(false);
+      createInterviewMutation.mutate({ applicationId: application.id, data }, {
+        onSuccess: () => {
+          setIsInterviewModalOpen(false);
+          notify('Interview added', 'success');
+        },
+        onError: () => notify('Interview could not be added', 'error'),
+      });
     }
   };
 
   const handleUpdateInterview = (data: UpdateInterviewDto) => {
     if (selectedInterview && application) {
-      updateInterviewMutation.mutate({ 
+      updateInterviewMutation.mutate({
         interviewId: selectedInterview.id, 
         data, 
         applicationId: application.id 
+      }, {
+        onSuccess: () => {
+          setIsInterviewModalOpen(false);
+          notify('Interview updated', 'success');
+        },
+        onError: () => notify('Interview could not be updated', 'error'),
       });
-      setIsInterviewModalOpen(false);
     }
   };
 
   const handleDeleteInterviewConfirm = () => {
     if (selectedInterview && application) {
-      deleteInterviewMutation.mutate({ 
+      deleteInterviewMutation.mutate({
         interviewId: selectedInterview.id, 
         applicationId: application.id 
+      }, {
+        onSuccess: () => {
+          setIsDeleteInterviewDialogOpen(false);
+          notify('Interview deleted', 'success');
+        },
+        onError: () => notify('Interview could not be deleted', 'error'),
       });
-      setIsDeleteInterviewDialogOpen(false);
     }
   };
   

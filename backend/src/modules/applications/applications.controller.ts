@@ -1,4 +1,5 @@
-import { 
+import {
+  BadRequestException,
   Controller, 
   Get, 
   Post, 
@@ -17,6 +18,7 @@ import { CreateInterviewDto } from '../interviews/dto/create-interview.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AuthenticatedRequest } from '../../common/types/authenticated-request';
 import { ApplicationStatus } from '@prisma/client';
+import { getPaginationOptions } from '../../common/pagination';
 
 @Controller('applications')
 @UseGuards(JwtAuthGuard)
@@ -41,14 +43,17 @@ export class ApplicationsController {
     @Query('search') search?: string,
     @Query('dateApplied') dateApplied?: string,
   ) {
-    const pageNum = page ? parseInt(page, 10) : 1;
-    const limitNum = limit ? Math.min(parseInt(limit, 10), 100) : 10;
+    const pagination = getPaginationOptions(page, limit);
     const statusFilter = status && Object.values(ApplicationStatus).includes(status as ApplicationStatus)
       ? status
       : undefined;
 
+    if (dateApplied && Number.isNaN(Date.parse(dateApplied))) {
+      throw new BadRequestException('dateApplied must be a valid date');
+    }
+
     return {
-      data: await this.applicationsService.findAll(req.user.id, pageNum, limitNum, {
+      data: await this.applicationsService.findAll(req.user.id, pagination, {
         status: statusFilter,
         company,
         search,
@@ -100,9 +105,16 @@ export class ApplicationsController {
   }
 
   @Get(':id/interviews')
-  async getInterviews(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+  async getInterviews(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pagination = getPaginationOptions(page, limit, 25);
+
     return {
-      data: await this.applicationsService.getInterviews(id, req.user.id),
+      data: await this.applicationsService.getInterviews(id, req.user.id, pagination),
       message: 'success',
     };
   }

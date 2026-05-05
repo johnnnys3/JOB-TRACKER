@@ -1,4 +1,33 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '');
+
+if (process.env.NODE_ENV === 'production' && !configuredApiUrl) {
+  throw new Error('NEXT_PUBLIC_API_URL must be set for production builds');
+}
+
+const API_BASE_URL = configuredApiUrl || 'http://localhost:3002';
+
+type RequestInterceptor = (endpoint: string, options: RequestInit) => RequestInit | Promise<RequestInit>;
+type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
+
+const requestInterceptors: RequestInterceptor[] = [];
+const responseInterceptors: ResponseInterceptor[] = [];
+
+export const apiInterceptors = {
+  addRequest(interceptor: RequestInterceptor) {
+    requestInterceptors.push(interceptor);
+    return () => {
+      const index = requestInterceptors.indexOf(interceptor);
+      if (index >= 0) requestInterceptors.splice(index, 1);
+    };
+  },
+  addResponse(interceptor: ResponseInterceptor) {
+    responseInterceptors.push(interceptor);
+    return () => {
+      const index = responseInterceptors.indexOf(interceptor);
+      if (index >= 0) responseInterceptors.splice(index, 1);
+    };
+  },
+};
 
 export class ApiError extends Error {
   constructor(
@@ -13,11 +42,12 @@ export class ApiError extends Error {
 
 async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retryAuth = true
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   
-  const config: RequestInit = {
+  let config: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
@@ -26,7 +56,22 @@ async function apiRequest<T>(
     ...options,
   };
 
-  const response = await fetch(url, config);
+  for (const interceptor of requestInterceptors) {
+    config = await interceptor(endpoint, config);
+  }
+
+  let response = await fetch(url, config);
+
+  for (const interceptor of responseInterceptors) {
+    response = await interceptor(response);
+  }
+
+  if (response.status === 401 && retryAuth && endpoint !== '/auth/refresh') {
+    const refreshed = await refreshSession();
+    if (refreshed) {
+      return apiRequest<T>(endpoint, options, false);
+    }
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -38,6 +83,21 @@ async function apiRequest<T>(
   }
 
   return response.json() as Promise<T>;
+}
+
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshSession() {
+  if (!refreshPromise) {
+    refreshPromise = apiRequest('/auth/refresh', { method: 'POST' }, false)
+      .then(() => true)
+      .catch(() => false)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
 }
 
 export const api = {

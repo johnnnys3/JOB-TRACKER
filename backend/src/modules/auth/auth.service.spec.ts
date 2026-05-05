@@ -15,12 +15,22 @@ describe('AuthService', () => {
   const jwtService = {
     sign: jest.fn(),
   };
+  const configService = {
+    get: jest.fn((key: string) => {
+      const values: Record<string, string> = {
+        BCRYPT_ROUNDS: '12',
+        FRONTEND_URL: 'http://localhost:3000',
+        NODE_ENV: 'test',
+      };
+      return values[key];
+    }),
+  };
 
   let authService: AuthService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    authService = new AuthService(usersService as any, jwtService as any);
+    authService = new AuthService(usersService as any, jwtService as any, configService as any);
   });
 
   it('rejects login when the user does not exist', async () => {

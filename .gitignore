@@ -13,6 +13,8 @@ build/
 
 # Environment variables
 .env
+.env.*
+!.env.example
 .env.local
 .env.development.local
 .env.test.local
@@ -22,6 +24,7 @@ build/
 *.db
 *.sqlite
 *.sqlite3
+backups/
 
 # Logs
 logs
@@ -101,6 +104,3 @@ jspm_packages/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Prisma
-prisma/migrations/

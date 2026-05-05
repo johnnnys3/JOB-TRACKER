@@ -1,14 +1,14 @@
 'use client'
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, ExternalLink, Filter, LayoutGrid, List, MapPin, Plus, Search, Sparkles, type LucideIcon } from "lucide-react";
+import { Calendar, ExternalLink, Filter, LayoutGrid, List, MapPin, Plus, Search, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Application, ApplicationStatus, CreateApplicationDto, statusOptions } from "@/types";
 import { useApplications, useCreateApplication } from "@/hooks/useApplications";
-import { AddApplicationModal } from "@/components/AddApplicationModal";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import {
   Select,
@@ -23,6 +23,13 @@ import { AlertMessage } from "@/components/AlertMessage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/EmptyState";
 import { ThreePaneLayout } from "@/components/WorkspaceLayouts";
+import { useToast } from "@/contexts/ToastContext";
+import { VirtualizedStack } from "@/components/VirtualizedStack";
+
+const AddApplicationModal = dynamic(
+  () => import("@/components/AddApplicationModal").then(mod => mod.AddApplicationModal),
+  { ssr: false },
+);
 
 export default function Applications() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,6 +37,7 @@ export default function Applications() {
   const [page, setPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
+  const { notify } = useToast();
 
   const { data: applicationsData, isLoading, error } = useApplications({
     page,
@@ -132,47 +140,6 @@ export default function Applications() {
               </Select>
             </div>
 
-            <div>
-              <label className="mb-3 block text-sm font-medium text-foreground">Job location</label>
-              <div className="space-y-2">
-                {['Remote', 'On-site', 'Hybrid'].map((location, index) => (
-                  <label key={location} className="flex cursor-pointer items-center gap-3 rounded-xl px-1 py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                    <input type="checkbox" defaultChecked={index === 0} className="h-4 w-4 rounded border-teal-200 text-primary focus:ring-primary/20" />
-                    {location}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-3 block text-sm font-medium text-foreground">Employment type</label>
-              <div className="flex flex-wrap gap-2">
-                {['Full-time', 'Contract', 'Freelance'].map((type, index) => (
-                  <button
-                    key={type}
-                    type="button"
-                    className={index === 0
-                      ? 'rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-white'
-                      : 'rounded-full border border-teal-100 bg-teal-50 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-teal-100'}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-teal-800 p-4 text-white shadow-lg shadow-teal-900/10">
-              <div className="flex items-center gap-2 text-sm font-bold">
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-                Career Coach AI
-              </div>
-              <p className="mt-2 text-sm leading-6 text-white/82">
-                Get targeted prompts for your next follow-up or interview prep.
-              </p>
-              <Button type="button" variant="outline" size="sm" className="mt-4 border-white/25 bg-white/15 text-white hover:bg-white/25">
-                Start coaching
-              </Button>
-            </div>
           </CardContent>
           </Card>
         )}
@@ -194,17 +161,20 @@ export default function Applications() {
                   </Button>
                 </div>
               </div>
-              <div className="space-y-4">
-                {applications.map((app) => (
+              <VirtualizedStack
+                items={applications}
+                estimateSize={220}
+                height={Math.min(920, Math.max(applications.length * 236, 236))}
+                getKey={(app) => app.id}
+                renderItem={(app) => (
                   <ApplicationListCard
-                    key={app.id}
                     application={app}
                     isSelected={selectedApplication?.id === app.id}
                     formatDate={formatDate}
                     onSelect={() => setSelectedApplicationId(app.id)}
                   />
-                ))}
-              </div>
+                )}
+              />
             </div>
           ) : (
             <EmptyState
@@ -249,7 +219,13 @@ export default function Applications() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={(data: CreateApplicationDto) => {
-          createApplicationMutation.mutate(data);
+          createApplicationMutation.mutate(data, {
+            onSuccess: () => {
+              setIsAddModalOpen(false);
+              notify('Application added', 'success');
+            },
+            onError: () => notify('Application could not be added', 'error'),
+          });
         }}
       />
     </>

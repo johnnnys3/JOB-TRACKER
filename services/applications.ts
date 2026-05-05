@@ -1,13 +1,5 @@
 import { api } from './api';
-import { ApiResponse, Application, CreateApplicationDto, UpdateApplicationDto } from '@/types';
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+import { ApiResponse, Application, CreateApplicationDto, PaginatedResponse, UpdateApplicationDto } from '@/types';
 
 export interface ApplicationsQuery {
   page?: number;
